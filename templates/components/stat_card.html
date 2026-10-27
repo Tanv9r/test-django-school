@@ -1,0 +1,9 @@
+{% load hms_tags %}
+<{% if card.url %}a href="{{ card.url }}"{% else %}div{% endif %} class="stat-card {{ extra_class }}">
+  <span class="stat-icon tone-{{ card.color|default:'primary' }}"><i class="bi bi-{{ card.icon }}"></i></span>
+  <span class="min-w-0">
+    <span class="stat-value d-block">{% if card.is_money or card.money %}{% money card.value %}{% else %}{{ card.value }}{% endif %}</span>
+    <span class="stat-label d-block">{{ card.label }}</span>
+    {% if card.hint %}<span class="stat-hint d-block">{{ card.hint }}</span>{% endif %}
+  </span>
+</{% if card.url %}a{% else %}div{% endif %}>

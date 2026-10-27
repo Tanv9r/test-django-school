@@ -1,0 +1,38 @@
+{% extends "layouts/admin.html" %}
+{% load hms_tags %}
+{% block title %}Users &amp; roles{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Users &amp; roles</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Users &amp; roles</h1><p class="page-subtitle">Login accounts and their system roles. Permissions are enforced on the server for every request.</p></div>
+  <div class="page-actions"><a href="{% url 'adminpanel:user_create' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> New user</a></div>
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if users %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>User</th><th>Role</th><th>Linked profile</th><th>Last sign-in</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for u in users %}
+      <tr>
+        <td><div class="d-flex align-items-center gap-3"><span class="avatar avatar-sm">{{ u|initials }}</span><div><a href="{% url 'adminpanel:user_edit' u.pk %}" class="cell-title">{{ u.get_full_name|default:u.username }}</a><div class="cell-sub">@{{ u.username }}{% if u.is_superuser %} · superuser{% endif %}</div></div></div></td>
+        <td><span class="badge badge-soft-primary">{{ u.get_role_display }}</span></td>
+        <td class="small">{% if u.doctor_profile %}<i class="bi bi-person-badge"></i> {{ u.doctor_profile }}{% elif u.staff_profile %}<i class="bi bi-person-vcard"></i> {{ u.staff_profile.employee_id }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+        <td>{{ u.last_login|date:"d M Y, H:i"|default:"Never" }}</td>
+        <td>{{ u.is_active|active_badge }}</td>
+        <td class="text-end text-nowrap">
+          <a href="{% url 'adminpanel:user_edit' u.pk %}" class="btn btn-sm btn-light"><i class="bi bi-pencil"></i></a>
+          {% if u.pk != user.pk %}
+          <form method="post" action="{% url 'adminpanel:user_toggle_active' u.pk %}" class="d-inline" data-confirm="{% if u.is_active %}Deactivate {{ u.username }}? They will be signed out of new requests immediately.{% else %}Reactivate {{ u.username }}?{% endif %}" data-confirm-label="{% if u.is_active %}Deactivate{% else %}Activate{% endif %}">
+            {% csrf_token %}<button type="submit" class="btn btn-sm btn-light" title="{% if u.is_active %}Deactivate{% else %}Activate{% endif %}"><i class="bi bi-power"></i></button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}
+    {% include "components/empty_state.html" with icon="person-gear" title="No users found" message="No accounts match these filters." %}
+  {% endif %}
+</div>
+{% endblock %}

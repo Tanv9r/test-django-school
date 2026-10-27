@@ -1,0 +1,46 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Admissions{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Admissions</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Admissions</h1><p class="page-subtitle">Inpatient admissions and discharges</p></div>
+  <div class="page-actions">
+    {% if can.beds_view %}<a href="{% url 'admissions:bed_board' %}" class="btn btn-light"><i class="bi bi-grid-3x3-gap"></i> Bed board</a>{% endif %}
+    {% if can.admissions_manage %}<a href="{% url 'admissions:create' %}" class="btn btn-primary"><i class="bi bi-hospital"></i> Admit patient</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-danger"><i class="bi bi-person-fill"></i></span><span><span class="stat-value d-block">{{ occupancy.occupied }}</span><span class="stat-label">Occupied beds</span></span></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-success"><i class="bi bi-door-open"></i></span><span><span class="stat-value d-block">{{ occupancy.available }}</span><span class="stat-label">Available beds</span></span></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-warning"><i class="bi bi-tools"></i></span><span><span class="stat-value d-block">{{ occupancy.maintenance }}</span><span class="stat-label">In maintenance</span></span></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-primary"><i class="bi bi-percent"></i></span><span><span class="stat-value d-block">{{ occupancy.occupancy_rate }}%</span><span class="stat-label">Occupancy rate</span></span></div></div>
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if admissions %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr><th>Admission</th><th>Patient</th><th>Bed</th><th>Attending doctor</th><th>Admitted</th><th>Stay</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for adm in admissions %}
+          <tr>
+            <td><a href="{% url 'admissions:detail' adm.pk %}" class="cell-title">{{ adm.admission_number }}</a></td>
+            <td>{{ adm.patient.full_name }}<div class="cell-sub">{{ adm.patient.patient_id }}</div></td>
+            <td>{{ adm.bed.label }}<div class="cell-sub">{{ adm.bed.room.room_type }}</div></td>
+            <td>{{ adm.attending_doctor }}{% if adm.assigned_nurse %}<div class="cell-sub">Nurse: {{ adm.assigned_nurse.get_full_name|default:adm.assigned_nurse.username }}</div>{% endif %}</td>
+            <td>{{ adm.admitted_at|date:"d M Y, H:i" }}</td>
+            <td>{{ adm.length_of_stay_days }} d</td>
+            <td>{{ adm.status|status_badge:adm.get_status_display }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% if can.admissions_manage %}{% url 'admissions:create' as create_url %}{% endif %}
+    {% include "components/empty_state.html" with icon="hospital" title="No admissions found" message="No admissions match this view." action_url=create_url action_label="Admit patient" %}
+  {% endif %}
+</div>
+{% endblock %}

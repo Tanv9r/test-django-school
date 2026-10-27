@@ -1,0 +1,61 @@
+{% load hms_tags %}
+<header class="app-topbar">
+  <button class="topbar-icon d-lg-none" type="button" data-sidebar-toggle aria-label="Toggle navigation"><i class="bi bi-list"></i></button>
+  <form class="topbar-search" action="{% url 'dashboard:search' %}" method="get" role="search">
+    <i class="bi bi-search"></i>
+    <input class="form-control" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search patients, doctors, invoices…" aria-label="Search" minlength="2">
+  </form>
+  <div class="topbar-actions">
+    <a class="topbar-icon d-sm-none" href="{% url 'dashboard:search' %}" aria-label="Search"><i class="bi bi-search"></i></a>
+    <div class="dropdown">
+      <button class="topbar-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+        <i class="bi bi-bell"></i>
+        {% if notifications %}<span class="dot">{{ notifications|length }}</span>{% endif %}
+      </button>
+      <div class="dropdown-menu dropdown-menu-end notification-menu p-0 shadow">
+        <div class="px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+          <strong class="small">Notifications</strong>
+          <span class="badge badge-soft-primary">{{ notifications|length }}</span>
+        </div>
+        {% for item in notifications %}
+          <a class="dropdown-item notification-item" href="{{ item.url }}">
+            <span class="ni-icon tone-{{ item.level }}"><i class="bi bi-{{ item.icon }}"></i></span>
+            <span class="small"><strong>{{ item.count }}</strong> {{ item.text }}</span>
+          </a>
+        {% empty %}
+          <div class="text-center text-muted small py-4"><i class="bi bi-check2-circle fs-4 d-block mb-1"></i>You're all caught up.</div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="dropdown">
+      <button class="user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="avatar avatar-sm">{{ user.get_full_name|default:user.username|initials }}</span>
+        <span class="meta d-none d-md-block">
+          <span class="d-block fw-semibold small">{{ user.display_name }}</span>
+          <small>{{ user.get_role_display }}</small>
+        </span>
+        <i class="bi bi-chevron-down small d-none d-md-inline"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow">
+        <li><h6 class="dropdown-header">Signed in as {{ user.username }}</h6></li>
+        <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person me-2"></i>My profile</a></li>
+        <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}"><i class="bi bi-key me-2"></i>Change password</a></li>
+        {% if can.adminpanel_access %}
+          <li><hr class="dropdown-divider"></li>
+          {% if admin_mode %}
+            <li><a class="dropdown-item" href="{% url 'dashboard:index' %}"><i class="bi bi-grid-1x2 me-2"></i>Staff workspace</a></li>
+          {% else %}
+            <li><a class="dropdown-item" href="{% url 'adminpanel:overview' %}"><i class="bi bi-shield-lock me-2"></i>Admin panel</a></li>
+          {% endif %}
+        {% endif %}
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+</header>

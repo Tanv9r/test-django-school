@@ -1,0 +1,13 @@
+<div class="formset-row {% if f.DELETE.value %}is-deleted{% endif %}">
+  {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+  <div class="row g-2 align-items-end">
+    <div class="col-sm-4"><label class="form-label">Day</label>{{ f.weekday }}{% for e in f.weekday.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-5 col-sm-3"><label class="form-label">From</label>{{ f.start_time }}{% for e in f.start_time.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-5 col-sm-3"><label class="form-label">To</label>{{ f.end_time }}{% for e in f.end_time.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-2 col-sm-2 text-end">
+      <span class="d-none">{{ f.DELETE }}</span>
+      <button type="button" class="btn btn-light btn-icon text-danger" data-formset-remove title="Remove / restore"><i class="bi bi-trash"></i></button>
+    </div>
+  </div>
+  {% for e in f.non_field_errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+</div>

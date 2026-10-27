@@ -1,0 +1,35 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Rooms &amp; beds{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:bed_board' %}">Bed board</a></li><li class="breadcrumb-item active">Rooms &amp; beds</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Rooms &amp; beds</h1><p class="page-subtitle">Configure rooms, room types and bed availability.</p></div>
+  <div class="page-actions">
+    <a href="{% url 'adminpanel:config_list' 'room-types' %}" class="btn btn-light"><i class="bi bi-tags"></i> Room types</a>
+    <a href="{% url 'admissions:room_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add room</a>
+  </div>
+</div>
+<div class="card-hms">
+  {% if rooms %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>Room</th><th>Type</th><th>Department</th><th>Floor</th><th>Beds</th><th>Occupied</th><th>Status</th><th></th></tr></thead>
+    <tbody>{% for room in rooms %}
+      <tr>
+        <td><a href="{% url 'admissions:room_detail' room.pk %}" class="cell-title">Room {{ room.number }}</a></td>
+        <td>{{ room.room_type }}<div class="cell-sub">{% money room.room_type.daily_rate %}/day</div></td>
+        <td>{{ room.department|default:"—" }}</td>
+        <td>{{ room.floor|default:"—" }}</td>
+        <td>{{ room.bed_total }}</td>
+        <td>{{ room.bed_occupied }}</td>
+        <td>{{ room.is_active|active_badge }}</td>
+        <td class="text-end text-nowrap"><a href="{% url 'admissions:room_detail' room.pk %}" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a> <a href="{% url 'admissions:room_edit' room.pk %}" class="btn btn-sm btn-light"><i class="bi bi-pencil"></i></a></td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+    {% url 'admissions:room_create' as create_url %}
+    {% include "components/empty_state.html" with icon="door-closed" title="No rooms yet" message="Add the first room and its beds." action_url=create_url action_label="Add room" %}
+  {% endif %}
+</div>
+{% endblock %}

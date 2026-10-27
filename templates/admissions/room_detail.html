@@ -1,0 +1,36 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Room {{ room.number }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:room_list' %}">Rooms &amp; beds</a></li><li class="breadcrumb-item active">Room {{ room.number }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Room {{ room.number }} {{ room.is_active|active_badge }}</h1><p class="page-subtitle">{{ room.room_type }} · {% money room.room_type.daily_rate %}/day{% if room.department %} · {{ room.department }}{% endif %}{% if room.floor %} · Floor {{ room.floor }}{% endif %}</p></div>
+  <div class="page-actions"><a href="{% url 'admissions:room_edit' room.pk %}" class="btn btn-light"><i class="bi bi-pencil"></i> Edit room</a></div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-grid-3x3-gap"></i> Beds</h2></div>
+      {% if beds %}
+      <div class="table-responsive"><table class="table table-hms">
+        <thead><tr><th>Bed</th><th>Status</th><th>Updated</th><th></th></tr></thead>
+        <tbody>{% for bed in beds %}
+          <tr><td class="cell-title">Bed {{ bed.bed_number }}</td><td>{{ bed.status|status_badge:bed.get_status_display }}</td><td>{{ bed.updated_at|date:"d M Y, H:i" }}</td>
+            <td class="text-end"><a href="{% url 'admissions:bed_edit' room.pk bed.pk %}" class="btn btn-sm btn-light"><i class="bi bi-pencil"></i> Edit</a></td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}
+        {% include "components/empty_state.html" with icon="grid-3x3-gap" title="No beds" message="Add the first bed using the form." %}
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <form method="post" action="{% url 'admissions:bed_create' room.pk %}" class="card-hms" data-loading>
+      {% csrf_token %}
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-plus-circle"></i> Add a bed</h2></div>
+      <div class="card-hms-body"><div class="row g-3">{% for field in bed_form.visible_fields %}{% include "components/field.html" with field=field col="col-12" %}{% endfor %}</div></div>
+      <div class="card-hms-footer"><button class="btn btn-primary w-100" type="submit">Add bed</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

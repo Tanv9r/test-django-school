@@ -1,0 +1,31 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Payments{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'billing:invoice_list' %}">Billing</a></li><li class="breadcrumb-item active">Payments</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Payment history</h1><p class="page-subtitle">{{ page_obj.paginator.count }} payment{{ page_obj.paginator.count|pluralize }} · total <strong>{% money total_amount %}</strong></p></div>
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if payments %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>Payment</th><th>Date</th><th>Invoice</th><th>Patient</th><th>Method</th><th>Reference</th><th class="text-end">Amount</th></tr></thead>
+    <tbody>{% for p in payments %}
+      <tr>
+        <td class="cell-title">{{ p.payment_number }}</td>
+        <td>{{ p.paid_at|date:"d M Y, H:i" }}</td>
+        <td><a href="{% url 'billing:invoice_detail' p.invoice.pk %}">{{ p.invoice.invoice_number }}</a></td>
+        <td>{{ p.invoice.patient.full_name }}</td>
+        <td>{{ p.method }}</td>
+        <td>{{ p.reference|default:"—" }}</td>
+        <td class="text-end fw-semibold">{% money p.amount %}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}
+    {% include "components/empty_state.html" with icon="cash-coin" title="No payments found" message="Payments are recorded from an invoice's page." %}
+  {% endif %}
+</div>
+{% endblock %}

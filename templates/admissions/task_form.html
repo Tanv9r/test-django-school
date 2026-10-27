@@ -1,0 +1,8 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}New nursing task{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:list' %}">Admissions</a></li><li class="breadcrumb-item"><a href="{% url 'admissions:detail' admission.pk %}">{{ admission.admission_number }}</a></li><li class="breadcrumb-item active">New task</li>{% endblock %}
+{% block page_title %}New nursing task{% endblock %}
+{% block page_subtitle %}{{ admission.patient.full_name }} · {{ admission.bed.label }}{% endblock %}
+{% block form_col %}col-lg-8{% endblock %}
+{% block cancel_url %}{% url 'admissions:detail' admission.pk %}{% endblock %}
+{% block submit_label %}Add task{% endblock %}

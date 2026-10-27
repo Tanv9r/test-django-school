@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+{% block html_attrs %} data-bs-theme="dark"{% endblock %}
+{% block theme_css %}<link rel="stylesheet" href="{% static 'css/admin.css' %}">{% endblock %}
+{% block body_class %}theme-admin{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "components/sidebar_admin.html" %}
+  <div class="sidebar-backdrop" data-sidebar-close></div>
+  <div class="app-main">
+    {% include "components/topbar.html" with admin_mode=True %}
+    <main class="app-content" id="main-content">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'adminpanel:overview' %}"><i class="bi bi-shield-lock"></i> Admin</a></li>
+          {% block breadcrumbs %}{% endblock %}
+        </ol>
+      </nav>
+      {% include "components/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+    {% include "components/footer.html" %}
+  </div>
+</div>
+{% include "components/confirm_modal.html" %}
+{% endblock %}

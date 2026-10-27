@@ -1,0 +1,44 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ medicine.name }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'pharmacy:list' %}">Pharmacy</a></li><li class="breadcrumb-item active">{{ medicine.name }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">{{ medicine.name }} {{ medicine.is_active|active_badge }}</h1><p class="page-subtitle">{{ medicine.generic_name|default:"" }} {{ medicine.category }} · {{ medicine.manufacturer }} · batch {{ medicine.batch_number }}</p></div>
+  {% if can.pharmacy_manage %}
+  <div class="page-actions">
+    <a href="{% url 'pharmacy:edit' medicine.pk %}" class="btn btn-light"><i class="bi bi-pencil"></i> Edit</a>
+    <a href="{% url 'pharmacy:adjust' medicine.pk %}" class="btn btn-primary"><i class="bi bi-plus-slash-minus"></i> Adjust stock</a>
+  </div>
+  {% endif %}
+</div>
+{% if medicine.is_expired %}<div class="alert alert-danger"><i class="bi bi-calendar-x mt-1"></i><div>This batch expired on {{ medicine.expiry_date|date:"d M Y" }} and cannot be dispensed.{% if medicine.quantity %} Remove the remaining {{ medicine.quantity }} {{ medicine.unit }} from stock.{% endif %}</div></div>
+{% elif medicine.days_to_expiry <= warning_days %}<div class="alert alert-warning"><i class="bi bi-exclamation-triangle mt-1"></i><div>This batch expires in {{ medicine.days_to_expiry }} day{{ medicine.days_to_expiry|pluralize }}.</div></div>{% endif %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-{% if medicine.is_low_stock %}warning{% else %}primary{% endif %}"><i class="bi bi-box-seam"></i></span><span><span class="stat-value d-block">{{ medicine.quantity }}</span><span class="stat-label">{{ medicine.unit }} in stock</span></span></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-info"><i class="bi bi-bell"></i></span><span><span class="stat-value d-block">{{ medicine.reorder_level }}</span><span class="stat-label">Reorder level</span></span></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-success"><i class="bi bi-tag"></i></span><span><span class="stat-value d-block">{% money medicine.unit_price %}</span><span class="stat-label">Unit price</span></span></div></div>
+  <div class="col-6 col-lg-3"><div class="stat-card"><span class="stat-icon tone-secondary"><i class="bi bi-cash-stack"></i></span><span><span class="stat-value d-block">{% money medicine.stock_value %}</span><span class="stat-label">Stock value</span></span></div></div>
+</div>
+<div class="card-hms">
+  <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-clock-history"></i> Transaction history</h2><a href="{% url 'pharmacy:transactions' %}?q={{ medicine.name|urlencode }}" class="btn btn-sm btn-soft-primary">All movements</a></div>
+  {% if transactions %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>When</th><th>Type</th><th class="text-end">Change</th><th class="text-end">Balance</th><th>Reference</th><th>Note</th><th>By</th></tr></thead>
+    <tbody>{% for t in transactions %}
+      <tr>
+        <td>{{ t.created_at|date:"d M Y, H:i" }}</td>
+        <td>{{ t.get_transaction_type_display }}</td>
+        <td class="text-end fw-semibold {% if t.quantity_change < 0 %}text-danger{% else %}text-success{% endif %}">{% if t.quantity_change > 0 %}+{% endif %}{{ t.quantity_change }}</td>
+        <td class="text-end">{{ t.balance_after }}</td>
+        <td>{{ t.reference|default:"—" }}</td>
+        <td class="text-truncate" style="max-width:220px;">{{ t.note|default:"—" }}</td>
+        <td>{{ t.performed_by|default:"—" }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+    {% include "components/empty_state.html" with icon="arrow-left-right" title="No stock movements yet" message="Additions, adjustments and dispensing will be recorded here." %}
+  {% endif %}
+</div>
+{% endblock %}

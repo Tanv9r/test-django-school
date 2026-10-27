@@ -1,0 +1,44 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Prescriptions{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Prescriptions</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Prescriptions</h1><p class="page-subtitle">{% if can.prescriptions_dispense %}Pharmacy dispensing queue{% else %}Prescriptions for your patients{% endif %}</p></div>
+  {% if can.prescriptions_manage %}<div class="page-actions"><a href="{% url 'records:prescription_create' %}" class="btn btn-primary"><i class="bi bi-prescription2"></i> Write prescription</a></div>{% endif %}
+</div>
+<form method="get" class="card-hms filter-bar">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-6"><label class="form-label" for="rx-q">Search</label><input id="rx-q" name="q" class="form-control" value="{{ request.GET.q }}" placeholder="Prescription number, patient name or ID"></div>
+    <div class="col-sm-6 col-md-3"><label class="form-label" for="rx-status">Status</label>
+      <select id="rx-status" name="status" class="form-select"><option value="all">Any status</option>{% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    </div>
+    <div class="col-sm-6 col-md-3 d-flex gap-2"><button class="btn btn-primary flex-fill" type="submit"><i class="bi bi-funnel"></i> Apply</button><a href="{{ request.path }}" class="btn btn-light flex-fill">Reset</a></div>
+  </div>
+</form>
+<div class="card-hms">
+  {% if prescriptions %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr><th>Prescription</th><th>Patient</th><th>Doctor</th><th>Items</th><th>Issued</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for rx in prescriptions %}
+          <tr>
+            <td><a href="{% url 'records:prescription_detail' rx.pk %}" class="cell-title">{{ rx.prescription_number }}</a></td>
+            <td>{{ rx.patient.full_name }}<div class="cell-sub">{{ rx.patient.patient_id }}</div></td>
+            <td>{{ rx.doctor }}</td>
+            <td>{{ rx.items.all|length }} medication{{ rx.items.all|length|pluralize }}</td>
+            <td>{{ rx.created_at|date:"d M Y, H:i" }}</td>
+            <td>{{ rx.status|status_badge:rx.get_status_display }}</td>
+            <td class="text-end"><a href="{% url 'records:prescription_detail' rx.pk %}" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% include "components/empty_state.html" with icon="prescription2" title="No prescriptions" message="No prescriptions match this view." %}
+  {% endif %}
+</div>
+{% endblock %}

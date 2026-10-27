@@ -1,0 +1,10 @@
+/* Light staff workspace: off-white canvas, white cards, deep navy navigation. */
+body.theme-staff {
+  --hms-bg: #F4F7FB;
+  --hms-card: #FFFFFF;
+  --hms-nav: #172554;
+  --hms-border: #E2E8F0;
+  --hms-text: #1E293B;
+  background: var(--hms-bg);
+}
+body.theme-staff .sidebar-brand { border-bottom: 1px solid rgba(255, 255, 255, .06); }

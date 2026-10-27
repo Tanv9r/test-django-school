@@ -1,0 +1,8 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}{% if room %}Edit room {{ room.number }}{% else %}Add room{% endif %}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:room_list' %}">Rooms &amp; beds</a></li><li class="breadcrumb-item active">{% if room %}Room {{ room.number }}{% else %}Add room{% endif %}</li>{% endblock %}
+{% block page_title %}{% if room %}Edit room {{ room.number }}{% else %}Add a room{% endif %}{% endblock %}
+{% block page_subtitle %}{% if room %}Beds are managed from the room page.{% else %}Beds are created and numbered automatically.{% endif %}{% endblock %}
+{% block form_col %}col-lg-8{% endblock %}
+{% block cancel_url %}{% if room %}{% url 'admissions:room_detail' room.pk %}{% else %}{% url 'admissions:room_list' %}{% endif %}{% endblock %}
+{% block submit_label %}Save room{% endblock %}

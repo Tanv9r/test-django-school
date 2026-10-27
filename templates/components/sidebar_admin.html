@@ -1,0 +1,33 @@
+{% load hms_tags %}
+<aside class="app-sidebar" aria-label="Admin navigation">
+  <a href="{% url 'adminpanel:overview' %}" class="sidebar-brand">
+    <span class="brand-logo"><i class="bi bi-shield-lock"></i></span>
+    <span>
+      <span class="brand-name d-block">{{ hospital.name|truncatechars:24 }}</span>
+      <span class="brand-sub">Administration <span class="admin-badge ms-1">ADMIN</span></span>
+    </span>
+  </a>
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">Overview</div>
+    <a class="sidebar-link {% if request.resolver_match.url_name == 'overview' %}active{% endif %}" href="{% url 'adminpanel:overview' %}"><i class="bi bi-speedometer2"></i> Control center</a>
+    <a class="sidebar-link" href="{% url 'dashboard:reports' %}"><i class="bi bi-graph-up-arrow"></i> Reports</a>
+
+    <div class="sidebar-section">Access</div>
+    <a class="sidebar-link {% nav_active '/admin-panel/users/' %}" href="{% url 'adminpanel:user_list' %}"><i class="bi bi-person-gear"></i> Users &amp; roles</a>
+    <a class="sidebar-link" href="{% url 'staff:list' %}"><i class="bi bi-person-vcard"></i> Staff profiles</a>
+    <a class="sidebar-link {% nav_active '/admin-panel/audit-log/' %}" href="{% url 'adminpanel:audit_log' %}"><i class="bi bi-journal-text"></i> Audit log</a>
+
+    <div class="sidebar-section">Configuration</div>
+    <a class="sidebar-link {% nav_active '/admin-panel/config/departments/' %}" href="{% url 'adminpanel:config_list' 'departments' %}"><i class="bi bi-building"></i> Departments</a>
+    <a class="sidebar-link" href="{% url 'doctors:list' %}"><i class="bi bi-person-badge"></i> Doctors</a>
+    <a class="sidebar-link {% nav_active '/admin-panel/config/room-types/' %}" href="{% url 'adminpanel:config_list' 'room-types' %}"><i class="bi bi-door-closed"></i> Room types</a>
+    <a class="sidebar-link" href="{% url 'admissions:room_list' %}"><i class="bi bi-grid-3x3-gap"></i> Rooms &amp; beds</a>
+    <a class="sidebar-link {% nav_active '/admin-panel/config/payment-methods/' %}" href="{% url 'adminpanel:config_list' 'payment-methods' %}"><i class="bi bi-credit-card"></i> Payment methods</a>
+    <a class="sidebar-link {% nav_active '/admin-panel/config/medicine-categories/' %}" href="{% url 'adminpanel:config_list' 'medicine-categories' %}"><i class="bi bi-tags"></i> Medicine categories</a>
+    <a class="sidebar-link {% nav_active '/admin-panel/settings/' %}" href="{% url 'adminpanel:settings' %}"><i class="bi bi-sliders"></i> Hospital settings</a>
+
+    <div class="sidebar-section">Workspace</div>
+    <a class="sidebar-link" href="{% url 'dashboard:index' %}"><i class="bi bi-box-arrow-up-right"></i> Open staff workspace</a>
+  </nav>
+  <div class="sidebar-footer"><i class="bi bi-clock"></i> Times shown in {{ local_tz }}</div>
+</aside>

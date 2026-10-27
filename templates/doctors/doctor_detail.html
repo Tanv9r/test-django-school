@@ -1,0 +1,79 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ doctor }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'doctors:list' %}">Doctors</a></li><li class="breadcrumb-item active">{{ doctor }}</li>{% endblock %}
+{% block content %}
+<div class="card-hms mb-4">
+  <div class="card-hms-body d-flex flex-wrap gap-4 align-items-center">
+    <span class="avatar avatar-lg">{{ doctor.full_name|initials }}</span>
+    <div class="flex-fill">
+      <h1 class="page-title mb-1">{{ doctor }}</h1>
+      <div class="text-muted">{{ doctor.specialization }} · {{ doctor.qualifications }}</div>
+      <div class="mt-2 d-flex gap-2 flex-wrap">
+        <a href="{% url 'doctors:department_detail' doctor.department.pk %}" class="badge badge-soft-primary">{{ doctor.department }}</a>
+        {{ doctor.is_active|active_badge }}
+        <span class="badge badge-soft-secondary">{{ doctor.doctor_code }}</span>
+      </div>
+    </div>
+    <div class="page-actions">
+      {% if can.appointments_manage and doctor.is_active %}<a href="{% url 'appointments:create' %}?doctor={{ doctor.pk }}" class="btn btn-primary"><i class="bi bi-calendar-plus"></i> Book appointment</a>{% endif %}
+      {% if can.doctors_manage %}
+        <a href="{% url 'doctors:edit' doctor.pk %}" class="btn btn-light"><i class="bi bi-pencil"></i> Edit</a>
+        <form method="post" action="{% url 'doctors:toggle_active' doctor.pk %}" class="d-inline" data-confirm="{% if doctor.is_active %}Deactivate this doctor? They will no longer be bookable.{% else %}Reactivate this doctor?{% endif %}" data-confirm-label="{% if doctor.is_active %}Deactivate{% else %}Activate{% endif %}">
+          {% csrf_token %}<button class="btn btn-light" type="submit"><i class="bi bi-power"></i> {% if doctor.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-sm-4"><div class="stat-card"><span class="stat-icon tone-primary"><i class="bi bi-calendar3"></i></span><span><span class="stat-value d-block">{{ stats.total }}</span><span class="stat-label">Total appointments</span></span></div></div>
+  <div class="col-sm-4"><div class="stat-card"><span class="stat-icon tone-success"><i class="bi bi-check2-circle"></i></span><span><span class="stat-value d-block">{{ stats.completed }}</span><span class="stat-label">Completed</span></span></div></div>
+  <div class="col-sm-4"><div class="stat-card"><span class="stat-icon tone-info"><i class="bi bi-hourglass-split"></i></span><span><span class="stat-value d-block">{{ stats.upcoming }}</span><span class="stat-label">Upcoming</span></span></div></div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-person-lines-fill"></i> Details</h2></div>
+      <div class="card-hms-body">
+        <dl class="detail-list" style="grid-template-columns:1fr 1fr;">
+          <div><dt>Phone</dt><dd>{{ doctor.phone }}</dd></div>
+          <div><dt>Email</dt><dd>{{ doctor.email|default:"—" }}</dd></div>
+          <div><dt>Consultation fee</dt><dd>{% money doctor.consultation_fee %}</dd></div>
+          <div><dt>Slot length</dt><dd>{{ doctor.get_slot_minutes_display }}</dd></div>
+          <div><dt>Login account</dt><dd>{% if doctor.user %}{{ doctor.user.username }}{% else %}<span class="text-muted">Not linked</span>{% endif %}</dd></div>
+        </dl>
+        {% if doctor.bio %}<hr><p class="prose mb-0">{{ doctor.bio }}</p>{% endif %}
+        {% if can.adminpanel_access and not doctor.user %}<hr><a href="{% url 'adminpanel:user_create' %}?doctor={{ doctor.pk }}" class="btn btn-sm btn-soft-primary"><i class="bi bi-key"></i> Create login for this doctor</a>{% endif %}
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-clock"></i> Working hours</h2><span class="small text-muted">{{ local_tz }}</span></div>
+      <div class="card-hms-body">
+        {% for slot in doctor.availability.all %}
+          <div class="d-flex justify-content-between {% if not forloop.last %}mb-2 pb-2 border-bottom{% endif %}"><span class="fw-semibold">{{ slot.get_weekday_display }}</span><span>{{ slot.start_time|time:"H:i" }} – {{ slot.end_time|time:"H:i" }}</span></div>
+        {% empty %}
+          <p class="text-muted mb-0 small">No working hours configured — this doctor cannot be booked yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-calendar-event"></i> Upcoming appointments</h2></div>
+      {% if not can_see_schedule %}
+        <div class="card-hms-body text-muted small">Appointment details are only visible to front-desk staff, administrators and the doctor.</div>
+      {% elif upcoming_appointments %}
+        <div class="table-responsive"><table class="table table-hms">
+          <thead><tr><th>When</th><th>Patient</th><th>Status</th></tr></thead>
+          <tbody>{% for a in upcoming_appointments %}
+            <tr><td><a href="{% url 'appointments:detail' a.pk %}" class="cell-title">{{ a.start_at|date:"D d M, H:i" }}</a></td><td>{{ a.patient.full_name }}</td><td>{{ a.status|status_badge:a.get_status_display }}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% else %}
+        {% include "components/empty_state.html" with icon="calendar2-check" title="No upcoming appointments" message="This doctor's schedule is clear." %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

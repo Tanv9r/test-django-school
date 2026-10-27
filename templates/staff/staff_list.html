@@ -1,0 +1,33 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Staff directory{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Staff directory</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Staff directory</h1><p class="page-subtitle">{{ page_obj.paginator.count }} staff member{{ page_obj.paginator.count|pluralize }}</p></div>
+  {% if can.staff_manage %}<div class="page-actions"><a href="{% url 'staff:create' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Add staff member</a></div>{% endif %}
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if staff_members %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>Name</th><th>Job title</th><th>Department</th><th>Contact</th><th>Joined</th><th>System role</th><th>Status</th></tr></thead>
+    <tbody>{% for m in staff_members %}
+      <tr>
+        <td><div class="d-flex align-items-center gap-3"><span class="avatar">{{ m.full_name|initials }}</span><div><a href="{% url 'staff:detail' m.pk %}" class="cell-title">{{ m.full_name }}</a><div class="cell-sub">{{ m.employee_id }}</div></div></div></td>
+        <td>{{ m.job_title }}</td>
+        <td>{{ m.department|default:"—" }}</td>
+        <td>{{ m.phone }}<div class="cell-sub">{{ m.email|default:"—" }}</div></td>
+        <td>{{ m.joining_date|date:"d M Y" }}</td>
+        <td>{% if m.user %}<span class="badge badge-soft-primary">{{ m.user.get_role_display }}</span>{% if not m.user.is_active %} <span class="badge badge-soft-secondary">Disabled</span>{% endif %}{% else %}<span class="cell-sub">No access</span>{% endif %}</td>
+        <td>{{ m.employment_status|status_badge:m.get_employment_status_display }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}
+    {% if can.staff_manage %}{% url 'staff:create' as create_url %}{% endif %}
+    {% include "components/empty_state.html" with icon="person-vcard" title="No staff found" message="No staff members match these filters." action_url=create_url action_label="Add staff member" %}
+  {% endif %}
+</div>
+{% endblock %}

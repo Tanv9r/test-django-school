@@ -1,0 +1,50 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Invoices{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Invoices</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Invoices</h1><p class="page-subtitle">Patient billing and outstanding balances</p></div>
+  <div class="page-actions">
+    <a href="{% url 'billing:payment_list' %}" class="btn btn-light"><i class="bi bi-cash-coin"></i> Payments</a>
+    {% if can.billing_manage %}<a href="{% url 'billing:invoice_create' %}" class="btn btn-primary"><i class="bi bi-receipt-cutoff"></i> New invoice</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="stat-card"><span class="stat-icon tone-primary"><i class="bi bi-receipt"></i></span><span><span class="stat-value d-block">{% money summary.billed %}</span><span class="stat-label">Billed (filtered, excl. cancelled)</span></span></div></div>
+  <div class="col-md-4"><div class="stat-card"><span class="stat-icon tone-success"><i class="bi bi-cash-stack"></i></span><span><span class="stat-value d-block">{% money summary.collected %}</span><span class="stat-label">Collected</span></span></div></div>
+  <div class="col-md-4"><div class="stat-card"><span class="stat-icon tone-danger"><i class="bi bi-hourglass-split"></i></span><span><span class="stat-value d-block">{% money summary.outstanding %}</span><span class="stat-label">Outstanding</span></span></div></div>
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if invoices %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr><th>Invoice</th><th>Patient</th><th>Issued</th><th>Due</th><th class="text-end">Total</th><th class="text-end">Paid</th><th class="text-end">Balance</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td><a href="{% url 'billing:invoice_detail' inv.pk %}" class="cell-title">{{ inv.invoice_number }}</a></td>
+            <td>{{ inv.patient.full_name }}<div class="cell-sub">{{ inv.patient.patient_id }}</div></td>
+            <td>{{ inv.issue_date|date:"d M Y" }}</td>
+            <td>{% if inv.due_date %}<span class="{% if inv.is_overdue %}text-danger fw-semibold{% endif %}">{{ inv.due_date|date:"d M Y" }}</span>{% else %}—{% endif %}</td>
+            <td class="text-end">{% money inv.total %}</td>
+            <td class="text-end">{% money inv.amount_paid %}</td>
+            <td class="text-end fw-semibold">{% money inv.balance_due %}</td>
+            <td>{{ inv.status|status_badge:inv.get_status_display }}{% if inv.is_overdue %} <span class="badge badge-soft-danger">Overdue</span>{% endif %}</td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'billing:invoice_print' inv.pk %}" target="_blank" rel="noopener" class="btn btn-sm btn-light" title="Print" data-bs-toggle="tooltip"><i class="bi bi-printer"></i></a>
+              <a href="{% url 'billing:invoice_detail' inv.pk %}" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% if can.billing_manage %}{% url 'billing:invoice_create' as create_url %}{% endif %}
+    {% include "components/empty_state.html" with icon="receipt" title="No invoices found" message="No invoices match these filters." action_url=create_url action_label="New invoice" %}
+  {% endif %}
+</div>
+{% endblock %}

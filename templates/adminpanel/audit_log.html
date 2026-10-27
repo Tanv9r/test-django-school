@@ -1,0 +1,29 @@
+{% extends "layouts/admin.html" %}
+{% block title %}Audit log{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Audit log</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Audit log</h1><p class="page-subtitle">Sign-ins, record changes, status changes, payments and stock movements.</p></div>
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if entries %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>When</th><th>User</th><th>Action</th><th>Object</th><th>Details</th><th>IP</th></tr></thead>
+    <tbody>{% for e in entries %}
+      <tr>
+        <td class="text-nowrap">{{ e.created_at|date:"d M Y, H:i:s" }}</td>
+        <td>{{ e.user|default:"—" }}</td>
+        <td><span class="badge {% if e.action == 'login_failed' %}badge-soft-danger{% elif e.action == 'access' %}badge-soft-warning{% else %}badge-soft-primary{% endif %}">{{ e.get_action_display }}</span></td>
+        <td>{{ e.object_repr|truncatechars:50|default:"—" }}<div class="cell-sub">{{ e.model_label }}</div></td>
+        <td class="small">{{ e.message }}{% for field, values in e.changes.items %}<div class="cell-sub">{{ field }}: “{{ values.0|truncatechars:30 }}” → “{{ values.1|truncatechars:30 }}”</div>{% endfor %}</td>
+        <td class="small text-muted">{{ e.ip_address|default:"—" }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}
+    {% include "components/empty_state.html" with icon="journal-text" title="No entries" message="No audit entries match these filters." %}
+  {% endif %}
+</div>
+{% endblock %}

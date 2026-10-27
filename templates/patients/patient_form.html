@@ -1,0 +1,53 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}{% if patient %}Edit {{ patient.full_name }}{% else %}Register patient{% endif %}{% endblock %}
+{% block breadcrumbs %}
+  <li class="breadcrumb-item"><a href="{% url 'patients:list' %}">Patients</a></li>
+  {% if patient %}<li class="breadcrumb-item"><a href="{% url 'patients:detail' patient.pk %}">{{ patient.full_name }}</a></li><li class="breadcrumb-item active">Edit</li>
+  {% else %}<li class="breadcrumb-item active">Register</li>{% endif %}
+{% endblock %}
+{% block page_title %}{% if patient %}Edit patient · {{ patient.patient_id }}{% else %}Register a new patient{% endif %}{% endblock %}
+{% block page_subtitle %}{% if patient %}Changes are recorded in the audit log.{% else %}A unique patient ID is generated automatically when you save.{% endif %}{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-person"></i> Personal details</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.first_name %}
+      {% include "components/field.html" with field=form.last_name %}
+      {% include "components/field.html" with field=form.date_of_birth col="col-md-4" %}
+      {% include "components/field.html" with field=form.gender col="col-md-4" %}
+      {% include "components/field.html" with field=form.blood_group col="col-md-4" %}
+    </div>
+  </div>
+</div>
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-telephone"></i> Contact</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.phone %}
+      {% include "components/field.html" with field=form.email %}
+      {% include "components/field.html" with field=form.address %}
+    </div>
+    <hr class="my-4">
+    <div class="form-section-title"><i class="bi bi-person-exclamation"></i> Emergency contact</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.emergency_contact_name col="col-md-5" %}
+      {% include "components/field.html" with field=form.emergency_contact_phone col="col-md-4" %}
+      {% include "components/field.html" with field=form.emergency_contact_relation col="col-md-3" %}
+    </div>
+  </div>
+</div>
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-heart-pulse"></i> Medical information</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.allergies col="col-md-4" %}
+      {% include "components/field.html" with field=form.chronic_conditions col="col-md-4" %}
+      {% include "components/field.html" with field=form.current_medications col="col-md-4" %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block cancel_url %}{% if patient %}{% url 'patients:detail' patient.pk %}{% else %}{% url 'patients:list' %}{% endif %}{% endblock %}
+{% block submit_label %}{% if patient %}Save changes{% else %}Register patient{% endif %}{% endblock %}

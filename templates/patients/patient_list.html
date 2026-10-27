@@ -1,0 +1,48 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Patients{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Patients</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Patients</h1>
+    <p class="page-subtitle">{% if can.patients_view_all %}All registered patients{% else %}Patients assigned to you{% endif %} · {{ page_obj.paginator.count }} found</p>
+  </div>
+  {% if can.patients_manage %}<div class="page-actions"><a href="{% url 'patients:create' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> Register patient</a></div>{% endif %}
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if patients %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr><th>Patient</th><th>Age / Gender</th><th>Contact</th>{% if can.patients_view_clinical %}<th>Blood group</th>{% endif %}<th>Registered</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for p in patients %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <span class="avatar">{{ p.full_name|initials }}</span>
+                <div><a href="{% url 'patients:detail' p.pk %}" class="cell-title">{{ p.full_name }}</a><div class="cell-sub">{{ p.patient_id }}</div></div>
+              </div>
+            </td>
+            <td>{{ p.age }} yrs<div class="cell-sub">{{ p.get_gender_display }}</div></td>
+            <td>{{ p.phone }}<div class="cell-sub">{{ p.email|default:"—" }}</div></td>
+            {% if can.patients_view_clinical %}<td><span class="badge badge-soft-danger">{{ p.blood_group }}</span></td>{% endif %}
+            <td>{{ p.created_at|date:"d M Y" }}</td>
+            <td>{% if p.is_active %}<span class="badge badge-soft-success">Active</span>{% else %}<span class="badge badge-soft-secondary">Archived</span>{% endif %}</td>
+            <td class="text-end">
+              <a href="{% url 'patients:detail' p.pk %}" class="btn btn-sm btn-light" data-bs-toggle="tooltip" title="View profile"><i class="bi bi-eye"></i></a>
+              {% if can.patients_manage %}<a href="{% url 'patients:edit' p.pk %}" class="btn btn-sm btn-light" data-bs-toggle="tooltip" title="Edit"><i class="bi bi-pencil"></i></a>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% if can.patients_manage %}{% url 'patients:create' as create_url %}{% endif %}
+    {% include "components/empty_state.html" with icon="people" title="No patients found" message="No patients match your filters. Adjust the search or register a new patient." action_url=create_url action_label="Register patient" %}
+  {% endif %}
+</div>
+{% endblock %}

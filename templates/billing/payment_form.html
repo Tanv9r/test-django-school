@@ -1,0 +1,9 @@
+{% extends "layouts/form_page.html" %}
+{% load hms_tags %}
+{% block title %}Record payment{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'billing:invoice_list' %}">Invoices</a></li><li class="breadcrumb-item"><a href="{% url 'billing:invoice_detail' invoice.pk %}">{{ invoice.invoice_number }}</a></li><li class="breadcrumb-item active">Record payment</li>{% endblock %}
+{% block page_title %}Record a payment{% endblock %}
+{% block page_subtitle %}{{ invoice.invoice_number }} · {{ invoice.patient.full_name }} · balance due <strong>{% money invoice.balance_due %}</strong>{% endblock %}
+{% block form_col %}col-lg-7{% endblock %}
+{% block cancel_url %}{% url 'billing:invoice_detail' invoice.pk %}{% endblock %}
+{% block submit_label %}Record payment{% endblock %}

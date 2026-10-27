@@ -1,0 +1,23 @@
+{% extends "layouts/staff.html" %}
+{% block title %}Reports{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Reports</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Reports &amp; analytics</h1><p class="page-subtitle">Date-filtered summaries with CSV export and print-friendly layouts.</p></div>
+</div>
+<div class="row g-3">
+  {% for report in reports %}
+    <div class="col-md-6 col-xl-4">
+      <a href="{% url 'dashboard:report_detail' report.slug %}" class="stat-card">
+        <span class="stat-icon tone-primary"><i class="bi bi-{{ report.icon }}"></i></span>
+        <span>
+          <span class="fw-semibold d-block">{{ report.title }}</span>
+          <span class="stat-hint d-block">{{ report.description }}</span>
+        </span>
+      </a>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="card-hms">{% include "components/empty_state.html" with icon="graph-up" title="No reports available" message="Your role does not have access to any reports." %}</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

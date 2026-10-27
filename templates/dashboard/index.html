@@ -1,0 +1,224 @@
+{% extends "layouts/staff.html" %}
+{% load static hms_tags %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ greeting }}, {{ user.first_name|default:user.username }} 👋</h1>
+    <p class="page-subtitle">{{ today|date:"l, d F Y" }} · Signed in as {{ user.get_role_display }}</p>
+  </div>
+  <div class="page-actions">
+    {% for action in quick_actions|slice:":2" %}
+      <a href="{{ action.url }}" class="btn {% if forloop.first %}btn-primary{% else %}btn-light{% endif %}"><i class="bi bi-{{ action.icon }}"></i> {{ action.label }}</a>
+    {% endfor %}
+  </div>
+</div>
+
+{% if cards %}
+<div class="row g-3 mb-4">
+  {% for card in cards %}
+    <div class="col-sm-6 col-xl-3">{% include "components/stat_card.html" with card=card %}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    {% if revenue_chart %}
+    <div class="card-hms">
+      <div class="card-hms-header">
+        <h2 class="card-hms-title"><i class="bi bi-graph-up-arrow"></i> Monthly revenue</h2>
+        <span class="small text-muted">Payments received, last 6 months</span>
+      </div>
+      <div class="card-hms-body">
+        {% if revenue_chart.has_data %}
+          <div class="chart-box"><canvas id="revenueChart" aria-label="Monthly revenue chart" role="img"></canvas></div>
+          {{ revenue_chart|json_script:"revenue-data" }}
+        {% else %}
+          {% include "components/empty_state.html" with icon="cash-stack" title="No payments recorded yet" message="Revenue appears here as soon as payments are recorded against invoices." %}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if upcoming_appointments is not None %}
+    <div class="card-hms">
+      <div class="card-hms-header">
+        <h2 class="card-hms-title"><i class="bi bi-calendar-event"></i> Upcoming appointments</h2>
+        <a href="{% url 'appointments:list' %}" class="btn btn-sm btn-soft-primary">View all</a>
+      </div>
+      {% if upcoming_appointments %}
+        <div class="table-responsive">
+          <table class="table table-hms">
+            <thead><tr><th>When</th><th>Patient</th><th>Doctor</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for a in upcoming_appointments %}
+                <tr>
+                  <td><a href="{% url 'appointments:detail' a.pk %}" class="cell-title">{{ a.start_at|date:"D d M, H:i" }}</a><div class="cell-sub">{{ a.reference }}</div></td>
+                  <td>{{ a.patient.full_name }}<div class="cell-sub">{{ a.patient.patient_id }}</div></td>
+                  <td>{{ a.doctor }}<div class="cell-sub">{{ a.department }}</div></td>
+                  <td>{{ a.status|status_badge:a.get_status_display }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        {% if can.appointments_manage %}{% url 'appointments:create' as book_url %}{% endif %}
+        {% include "components/empty_state.html" with icon="calendar2-x" title="No upcoming appointments" message="Scheduled and confirmed appointments will appear here." action_url=book_url action_label="Book appointment" %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if recent_admissions is not None %}
+    <div class="row g-4 mt-0">
+      <div class="col-md-6">
+        <div class="card-hms h-100">
+          <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-box-arrow-in-down-right"></i> Recent admissions</h2></div>
+          <div class="card-hms-body">
+            {% for adm in recent_admissions %}
+              <div class="d-flex align-items-center gap-3 {% if not forloop.last %}mb-3{% endif %}">
+                <span class="avatar avatar-sm">{{ adm.patient.full_name|initials }}</span>
+                <div class="flex-fill min-w-0">
+                  <a href="{% url 'admissions:detail' adm.pk %}" class="cell-title d-block text-truncate">{{ adm.patient.full_name }}</a>
+                  <div class="cell-sub">{{ adm.bed.label }} · {{ adm.admitted_at|date:"d M, H:i" }}</div>
+                </div>
+                {{ adm.status|status_badge:adm.get_status_display }}
+              </div>
+            {% empty %}
+              <p class="text-muted small mb-0">No admissions recorded yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card-hms h-100">
+          <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-box-arrow-up-right"></i> Recent discharges</h2></div>
+          <div class="card-hms-body">
+            {% for adm in recent_discharges %}
+              <div class="d-flex align-items-center gap-3 {% if not forloop.last %}mb-3{% endif %}">
+                <span class="avatar avatar-sm tone-success">{{ adm.patient.full_name|initials }}</span>
+                <div class="flex-fill min-w-0">
+                  <a href="{% url 'admissions:detail' adm.pk %}" class="cell-title d-block text-truncate">{{ adm.patient.full_name }}</a>
+                  <div class="cell-sub">{{ adm.length_of_stay_days }} day(s) · {{ adm.discharged_at|date:"d M, H:i" }}</div>
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-muted small mb-0">No discharges recorded yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if dispense_queue is not None %}
+    <div class="card-hms mt-4">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-capsule"></i> Dispensing queue</h2><a href="{% url 'records:prescription_list' %}" class="btn btn-sm btn-soft-primary">Open queue</a></div>
+      {% if dispense_queue %}
+        <div class="table-responsive"><table class="table table-hms"><thead><tr><th>Prescription</th><th>Patient</th><th>Doctor</th><th>Issued</th></tr></thead><tbody>
+          {% for rx in dispense_queue %}
+            <tr><td><a href="{% url 'records:prescription_detail' rx.pk %}" class="cell-title">{{ rx.prescription_number }}</a></td><td>{{ rx.patient.full_name }}</td><td>{{ rx.doctor }}</td><td>{{ rx.created_at|date:"d M, H:i" }}</td></tr>
+          {% endfor %}
+        </tbody></table></div>
+      {% else %}
+        {% include "components/empty_state.html" with icon="check2-all" title="Queue is clear" message="No prescriptions are waiting to be dispensed." %}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if my_tasks is not None %}
+    <div class="card-hms mt-4">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-clipboard2-pulse"></i> My nursing tasks</h2><a href="{% url 'admissions:tasks' %}" class="btn btn-sm btn-soft-primary">All tasks</a></div>
+      <div class="card-hms-body">
+        {% for task in my_tasks %}
+          <div class="d-flex justify-content-between align-items-center gap-2 {% if not forloop.last %}mb-3{% endif %}">
+            <div class="min-w-0">
+              <div class="fw-semibold">{{ task.title }}</div>
+              <div class="cell-sub">{{ task.admission.patient.full_name }} · {{ task.admission.bed.label }}{% if task.due_at %} · due {{ task.due_at|date:"d M H:i" }}{% endif %}</div>
+            </div>
+            {{ task.priority|status_badge:task.get_priority_display }}
+          </div>
+        {% empty %}
+          <p class="text-muted small mb-0">No open tasks. Nice work!</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-xl-4">
+    {% if quick_actions %}
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-lightning-charge"></i> Quick actions</h2></div>
+      <div class="card-hms-body">
+        <div class="row g-2">
+          {% for action in quick_actions %}
+            <div class="col-6"><a href="{{ action.url }}" class="quick-action"><i class="bi bi-{{ action.icon }}"></i>{{ action.label }}</a></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if appointment_chart %}
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-pie-chart"></i> Appointment status</h2><span class="small text-muted">Last 30 days</span></div>
+      <div class="card-hms-body">
+        {% if appointment_chart.total %}
+          <div class="chart-box chart-sm"><canvas id="statusChart" role="img" aria-label="Appointment status chart"></canvas></div>
+          {{ appointment_chart|json_script:"status-data" }}
+        {% else %}
+          {% include "components/empty_state.html" with icon="pie-chart" title="No appointments yet" message="The status breakdown appears once appointments are booked." %}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if occupancy %}
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-door-open"></i> Bed occupancy</h2><a href="{% url 'admissions:bed_board' %}" class="btn btn-sm btn-soft-primary">Bed board</a></div>
+      <div class="card-hms-body">
+        {% if occupancy.total %}
+          <div class="d-flex justify-content-between align-items-end mb-2">
+            <div><div class="stat-value">{{ occupancy.occupancy_rate }}%</div><div class="stat-label">occupied of usable beds</div></div>
+            <div class="text-end small text-muted">{{ occupancy.occupied }} / {{ occupancy.total }} beds</div>
+          </div>
+          <div class="progress progress-thin mb-3"><div class="progress-bar {% if occupancy.occupancy_rate >= 90 %}bg-danger{% elif occupancy.occupancy_rate >= 70 %}bg-warning{% else %}bg-primary{% endif %}" style="width: {{ occupancy.occupancy_rate }}%"></div></div>
+          <div class="chart-box chart-sm"><canvas id="bedChart" role="img" aria-label="Bed occupancy chart"></canvas></div>
+          {{ occupancy.chart|json_script:"bed-data" }}
+        {% else %}
+          {% include "components/empty_state.html" with icon="door-closed" title="No beds configured" message="An administrator can add rooms and beds under Rooms & beds." %}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if recent_patients is not None %}
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-person-plus"></i> Recent patients</h2><a href="{% url 'patients:list' %}" class="btn btn-sm btn-soft-primary">All</a></div>
+      <div class="card-hms-body">
+        {% for p in recent_patients %}
+          <a href="{% url 'patients:detail' p.pk %}" class="d-flex align-items-center gap-3 {% if not forloop.last %}mb-3{% endif %}">
+            <span class="avatar avatar-sm">{{ p.full_name|initials }}</span>
+            <span class="flex-fill min-w-0"><span class="cell-title d-block text-truncate">{{ p.full_name }}</span><span class="cell-sub">{{ p.patient_id }} · {{ p.created_at|timesince }} ago</span></span>
+          </a>
+        {% empty %}
+          {% if can.patients_manage %}{% url 'patients:create' as reg_url %}{% endif %}
+          {% include "components/empty_state.html" with icon="people" title="No patients yet" message="Registered patients will be listed here." action_url=reg_url action_label="Register patient" %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+<script>
+  HMSCharts.bar("revenueChart", "revenue-data", { money: true, currency: "{{ hospital.currency_symbol|escapejs }}" });
+  HMSCharts.doughnut("statusChart", "status-data");
+  HMSCharts.doughnut("bedChart", "bed-data");
+</script>
+{% endblock %}

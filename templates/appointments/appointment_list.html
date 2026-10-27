@@ -1,0 +1,48 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Appointments{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Appointments</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Appointments</h1><p class="page-subtitle">{% if user.effective_role == 'doctor' %}Your consultations{% else %}All hospital appointments{% endif %} · times in {{ local_tz }}</p></div>
+  <div class="page-actions">
+    <a href="{% url 'appointments:calendar' %}" class="btn btn-light"><i class="bi bi-calendar3"></i> Calendar view</a>
+    {% if can.appointments_manage %}<a href="{% url 'appointments:create' %}" class="btn btn-primary"><i class="bi bi-calendar-plus"></i> Book appointment</a>{% endif %}
+  </div>
+</div>
+<ul class="nav nav-pills-hms mb-3">
+  <li class="nav-item"><a class="nav-link {% if scope == 'today' %}active{% endif %}" href="{% querystring scope='today' page=None %}">Today</a></li>
+  <li class="nav-item"><a class="nav-link {% if scope == 'upcoming' %}active{% endif %}" href="{% querystring scope='upcoming' page=None %}">Upcoming</a></li>
+  <li class="nav-item"><a class="nav-link {% if scope == 'past' %}active{% endif %}" href="{% querystring scope='past' page=None %}">Past</a></li>
+  <li class="nav-item"><a class="nav-link {% if scope == 'all' or scope == 'range' %}active{% endif %}" href="{% querystring scope='all' page=None %}">All</a></li>
+</ul>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if appointments %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr><th>Date &amp; time</th><th>Patient</th><th>Doctor</th><th>Reason</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for a in appointments %}
+          <tr>
+            <td><a href="{% url 'appointments:detail' a.pk %}" class="cell-title">{{ a.start_at|date:"D d M Y" }}</a><div class="cell-sub">{{ a.start_at|time:"H:i" }}–{{ a.end_at|time:"H:i" }} · {{ a.reference }}</div></td>
+            <td>{{ a.patient.full_name }}<div class="cell-sub">{{ a.patient.patient_id }}</div></td>
+            <td>{{ a.doctor }}<div class="cell-sub">{{ a.department }}</div></td>
+            <td class="text-truncate" style="max-width:240px;">{{ a.reason }}</td>
+            <td>{{ a.status|status_badge:a.get_status_display }}</td>
+            <td class="text-end text-nowrap">
+              <a href="{% url 'appointments:detail' a.pk %}" class="btn btn-sm btn-light" title="Details" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+              {% if can.appointments_manage and a.is_open %}<a href="{% url 'appointments:edit' a.pk %}" class="btn btn-sm btn-light" title="Reschedule" data-bs-toggle="tooltip"><i class="bi bi-arrow-repeat"></i></a>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% if can.appointments_manage %}{% url 'appointments:create' as create_url %}{% endif %}
+    {% include "components/empty_state.html" with icon="calendar2-x" title="No appointments found" message="Nothing matches this view. Try another tab or adjust the filters." action_url=create_url action_label="Book appointment" %}
+  {% endif %}
+</div>
+{% endblock %}

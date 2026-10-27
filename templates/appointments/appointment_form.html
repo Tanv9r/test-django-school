@@ -1,0 +1,46 @@
+{% extends "layouts/form_page.html" %}
+{% load static %}
+{% block title %}{% if appointment %}Reschedule {{ appointment.reference }}{% else %}Book appointment{% endif %}{% endblock %}
+{% block breadcrumbs %}
+  <li class="breadcrumb-item"><a href="{% url 'appointments:list' %}">Appointments</a></li>
+  {% if appointment %}<li class="breadcrumb-item"><a href="{% url 'appointments:detail' appointment.pk %}">{{ appointment.reference }}</a></li><li class="breadcrumb-item active">Reschedule</li>{% else %}<li class="breadcrumb-item active">Book</li>{% endif %}
+{% endblock %}
+{% block page_title %}{% if appointment %}Reschedule appointment{% else %}Book an appointment{% endif %}{% endblock %}
+{% block page_subtitle %}Availability and double-booking are verified on the server when you save.{% endblock %}
+{% block form_attrs %}data-appointment-form data-slots-url="{% url 'appointments:slots' %}" data-appointment-id="{{ appointment.pk|default:'' }}"{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <div class="form-section-title"><i class="bi bi-person"></i> Patient &amp; doctor</div>
+        <div class="row g-3">
+          {% include "components/field.html" with field=form.patient col="col-12" %}
+          {% include "components/field.html" with field=form.department %}
+          {% include "components/field.html" with field=form.doctor %}
+          {% include "components/field.html" with field=form.reason %}
+          {% include "components/field.html" with field=form.notes %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <div class="form-section-title"><i class="bi bi-clock"></i> Date &amp; time</div>
+        <div class="row g-3">
+          {% include "components/field.html" with field=form.date %}
+          {% include "components/field.html" with field=form.time %}
+        </div>
+        <hr>
+        <div class="small-caps mb-2">Free slots</div>
+        <div data-slot-panel aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block cancel_url %}{% if appointment %}{% url 'appointments:detail' appointment.pk %}{% else %}{% url 'appointments:list' %}{% endif %}{% endblock %}
+{% block submit_label %}{% if appointment %}Save changes{% else %}Book appointment{% endif %}{% endblock %}
+{% block extra_js %}<script src="{% static 'js/appointments.js' %}"></script>{% endblock %}

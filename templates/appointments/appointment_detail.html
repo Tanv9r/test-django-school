@@ -1,0 +1,80 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ appointment.reference }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'appointments:list' %}">Appointments</a></li><li class="breadcrumb-item active">{{ appointment.reference }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Appointment {{ appointment.reference }} {{ appointment.status|status_badge:appointment.get_status_display }}</h1>
+    <p class="page-subtitle"><i class="bi bi-calendar3"></i> {{ appointment.start_at|date:"l, d F Y" }} · {{ appointment.start_at|time:"H:i" }}–{{ appointment.end_at|time:"H:i" }} ({{ local_tz }})</p>
+  </div>
+  <div class="page-actions">
+    {% if can.appointments_manage and appointment.is_open %}<a href="{% url 'appointments:edit' appointment.pk %}" class="btn btn-light"><i class="bi bi-arrow-repeat"></i> Reschedule</a>{% endif %}
+    {% if can.records_manage and user.doctor_profile == appointment.doctor %}<a href="{% url 'records:create' %}?appointment={{ appointment.pk }}" class="btn btn-primary"><i class="bi bi-journal-plus"></i> Write medical record</a>{% endif %}
+    {% if can.billing_manage %}<a href="{% url 'billing:invoice_create' %}?patient={{ appointment.patient.pk }}" class="btn btn-light"><i class="bi bi-receipt"></i> Create invoice</a>{% endif %}
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-info-circle"></i> Details</h2></div>
+      <div class="card-hms-body">
+        <dl class="detail-list">
+          <div><dt>Patient</dt><dd>{% if can.patients_view %}<a href="{% url 'patients:detail' appointment.patient.pk %}">{{ appointment.patient.full_name }}</a>{% else %}{{ appointment.patient.full_name }}{% endif %}<div class="cell-sub">{{ appointment.patient.patient_id }} · {{ appointment.patient.phone }}</div></dd></div>
+          <div><dt>Doctor</dt><dd><a href="{% url 'doctors:detail' appointment.doctor.pk %}">{{ appointment.doctor }}</a><div class="cell-sub">{{ appointment.doctor.specialization }}</div></dd></div>
+          <div><dt>Department</dt><dd>{{ appointment.department }}</dd></div>
+          <div><dt>Booked</dt><dd>{{ appointment.created_at|date:"d M Y, H:i" }}{% if appointment.booked_by %}<div class="cell-sub">by {{ appointment.booked_by }}</div>{% endif %}</dd></div>
+          <div style="grid-column:1/-1"><dt>Reason for visit</dt><dd class="prose">{{ appointment.reason }}</dd></div>
+          {% if appointment.notes %}<div style="grid-column:1/-1"><dt>Front-desk notes</dt><dd class="prose">{{ appointment.notes }}</dd></div>{% endif %}
+          {% if appointment.cancellation_reason %}<div style="grid-column:1/-1"><dt>Cancellation reason</dt><dd class="text-danger">{{ appointment.cancellation_reason }}</dd></div>{% endif %}
+        </dl>
+      </div>
+    </div>
+    {% if records is not None %}
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-journal-medical"></i> Linked medical records</h2></div>
+      <div class="card-hms-body">
+        {% for r in records %}
+          <a href="{% url 'records:detail' r.pk %}" class="d-block {% if not forloop.last %}mb-2{% endif %}"><i class="bi bi-file-medical"></i> {{ r.diagnosis|truncatechars:90 }} <span class="cell-sub">· {{ r.visit_date|date:"d M Y H:i" }}</span></a>
+        {% empty %}
+          <p class="text-muted small mb-0">No medical record has been written for this visit yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    {% if can_change_status and appointment.allowed_transitions %}
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-arrow-left-right"></i> Update status</h2></div>
+      <div class="card-hms-body d-grid gap-2">
+        {% for status in appointment.allowed_transitions %}
+          {% if status != 'cancelled' %}
+          <form method="post" action="{% url 'appointments:change_status' appointment.pk %}" data-confirm="Mark this appointment as {{ status.label|lower }}?" data-confirm-label="Yes, mark {{ status.label|lower }}" data-confirm-class="btn-primary">
+            {% csrf_token %}<input type="hidden" name="status" value="{{ status.value }}">
+            <button type="submit" class="btn w-100 {% if status == 'completed' %}btn-success{% elif status == 'confirmed' %}btn-primary{% else %}btn-light{% endif %}">
+              <i class="bi bi-{% if status == 'completed' %}check2-circle{% elif status == 'confirmed' %}check2{% else %}person-x{% endif %}"></i> Mark {{ status.label|lower }}
+            </button>
+          </form>
+          {% endif %}
+        {% endfor %}
+        {% if 'cancelled' in appointment.allowed_transitions %}
+          <hr class="my-2">
+          <form method="post" action="{% url 'appointments:change_status' appointment.pk %}" data-confirm="Cancel this appointment? The time slot will be released." data-confirm-label="Cancel appointment">
+            {% csrf_token %}<input type="hidden" name="status" value="cancelled">
+            <label class="form-label" for="cancel-reason">Cancellation reason</label>
+            <input id="cancel-reason" name="reason" class="form-control mb-2" maxlength="255" required placeholder="e.g. Patient requested">
+            <button type="submit" class="btn btn-light text-danger w-100"><i class="bi bi-x-circle"></i> Cancel appointment</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    <div class="card-hms">
+      <div class="card-hms-body small text-muted">
+        <i class="bi bi-shield-check text-primary"></i> Completed and no-show statuses can only be set once the appointment time has passed. Every status change is recorded in the audit log.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

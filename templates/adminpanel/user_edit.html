@@ -1,0 +1,44 @@
+{% extends "layouts/admin.html" %}
+{% load hms_tags %}
+{% block title %}{{ target.username }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'adminpanel:user_list' %}">Users</a></li><li class="breadcrumb-item active">{{ target.username }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">{{ target.get_full_name|default:target.username }} {{ target.is_active|active_badge }}</h1><p class="page-subtitle">@{{ target.username }} · {{ target.get_role_display }} · joined {{ target.date_joined|date:"d M Y" }}</p></div>
+  <div class="page-actions">
+    {% if target.staff_profile %}<a href="{% url 'staff:detail' target.staff_profile.pk %}" class="btn btn-light"><i class="bi bi-person-vcard"></i> Staff profile</a>{% endif %}
+    {% if target.doctor_profile %}<a href="{% url 'doctors:detail' target.doctor_profile.pk %}" class="btn btn-light"><i class="bi bi-person-badge"></i> Doctor profile</a>{% endif %}
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-7">
+    <form method="post" class="card-hms" data-loading>
+      {% csrf_token %}
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-person-gear"></i> Account &amp; role</h2></div>
+      <div class="card-hms-body">{% include "components/form_fields.html" %}</div>
+      <div class="card-hms-footer text-end"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle"></i> Save account</button></div>
+    </form>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-clock-history"></i> Recent activity by this user</h2></div>
+      <div class="card-hms-body py-2">
+        {% for entry in activity %}
+          <div class="activity-item small"><strong>{{ entry.get_action_display }}</strong> {{ entry.object_repr|truncatechars:60 }} <span class="text-muted">· {{ entry.created_at|date:"d M Y H:i" }}{% if entry.ip_address %} · {{ entry.ip_address }}{% endif %}</span></div>
+        {% empty %}<p class="text-muted small my-2">No activity recorded.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <form method="post" action="{% url 'adminpanel:user_set_password' target.pk %}" class="card-hms" data-confirm="Reset the password for {{ target.username }}? Share the new password with them securely." data-confirm-label="Reset password" data-confirm-class="btn-primary">
+      {% csrf_token %}
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-key"></i> Reset password</h2></div>
+      <div class="card-hms-body"><div class="row g-3">{% for field in password_form.visible_fields %}{% include "components/field.html" with field=field col="col-12" %}{% endfor %}</div></div>
+      <div class="card-hms-footer"><button class="btn btn-light w-100" type="submit">Set new password</button></div>
+    </form>
+    <div class="card-hms">
+      <div class="card-hms-body small text-muted">
+        <i class="bi bi-info-circle text-primary"></i> Roles control what this user can see and do across the system. Changes take effect on the user's next request. Every change is recorded in the audit log.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

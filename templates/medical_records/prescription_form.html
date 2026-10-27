@@ -1,0 +1,31 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}Write prescription{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'records:prescription_list' %}">Prescriptions</a></li><li class="breadcrumb-item active">New</li>{% endblock %}
+{% block page_title %}Write a prescription{% endblock %}
+{% block page_subtitle %}Prescriptions are entered by the treating doctor; the system never suggests medication. Link an inventory item so the pharmacy can dispense from stock.{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.patient %}
+      {% include "components/field.html" with field=form.medical_record %}
+      {% include "components/field.html" with field=form.notes %}
+    </div>
+  </div>
+</div>
+<div class="card-hms" data-formset="items">
+  <div class="card-hms-header">
+    <h2 class="card-hms-title"><i class="bi bi-capsule"></i> Medications</h2>
+    <button type="button" class="btn btn-sm btn-soft-primary" data-formset-add="items"><i class="bi bi-plus-lg"></i> Add medication</button>
+  </div>
+  <div class="card-hms-body">
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="alert alert-danger"><i class="bi bi-exclamation-octagon mt-1"></i><div>{{ formset.non_form_errors|join:" " }}</div></div>{% endif %}
+    <div data-formset-rows>{% for f in formset %}{% include "medical_records/_item_row.html" with f=f %}{% endfor %}</div>
+    <template data-formset-template>{% include "medical_records/_item_row.html" with f=formset.empty_form %}</template>
+  </div>
+</div>
+{% endblock %}
+{% block cancel_url %}{% url 'records:prescription_list' %}{% endblock %}
+{% block submit_label %}Issue prescription{% endblock %}

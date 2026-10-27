@@ -1,0 +1,76 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Bed board{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:list' %}">Admissions</a></li><li class="breadcrumb-item active">Bed board</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Bed board</h1><p class="page-subtitle">Live bed status across all active rooms</p></div>
+  <div class="page-actions">
+    {% if can.beds_manage %}<a href="{% url 'admissions:room_list' %}" class="btn btn-light"><i class="bi bi-gear"></i> Manage rooms</a>{% endif %}
+    {% if can.admissions_manage %}<a href="{% url 'admissions:create' %}" class="btn btn-primary"><i class="bi bi-hospital"></i> Admit patient</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><a href="?status=" class="stat-card"><span class="stat-icon tone-primary"><i class="bi bi-grid-3x3-gap"></i></span><span><span class="stat-value d-block">{{ summary.total }}</span><span class="stat-label">Total beds</span></span></a></div>
+  <div class="col-6 col-lg-3"><a href="?status=available" class="stat-card"><span class="stat-icon tone-success"><i class="bi bi-door-open"></i></span><span><span class="stat-value d-block">{{ summary.available }}</span><span class="stat-label">Available</span></span></a></div>
+  <div class="col-6 col-lg-3"><a href="?status=occupied" class="stat-card"><span class="stat-icon tone-danger"><i class="bi bi-person-fill"></i></span><span><span class="stat-value d-block">{{ summary.occupied }}</span><span class="stat-label">Occupied</span></span></a></div>
+  <div class="col-6 col-lg-3"><a href="?status=maintenance" class="stat-card"><span class="stat-icon tone-warning"><i class="bi bi-tools"></i></span><span><span class="stat-value d-block">{{ summary.maintenance }}</span><span class="stat-label">Maintenance</span></span></a></div>
+</div>
+{% if by_type %}
+<div class="card-hms mb-4">
+  <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-bar-chart"></i> Occupancy by room type</h2><span class="small text-muted">Overall {{ summary.occupancy_rate }}%</span></div>
+  <div class="card-hms-body">
+    <div class="row g-4">
+      {% for row in by_type %}
+        <div class="col-md-6 col-xl-3">
+          <div class="d-flex justify-content-between small mb-1"><strong>{{ row.room__room_type__name }}</strong><span class="text-muted">{{ row.occupied }}/{{ row.total }}</span></div>
+          <div class="progress progress-thin"><div class="progress-bar bg-danger" style="width: {{ row.occupied|percent:row.total }}%"></div></div>
+          <div class="small text-muted mt-1">{{ row.available }} free · {{ row.maintenance }} maintenance</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+<form method="get" class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+  <input type="hidden" name="status" value="{{ status_filter }}">
+  <select name="room_type" class="form-select w-auto" onchange="this.form.submit()" aria-label="Room type">
+    <option value="">All room types</option>
+    {% for rt in room_types %}<option value="{{ rt.pk }}" {% if selected_room_type == rt.pk|stringformat:'s' %}selected{% endif %}>{{ rt.name }}</option>{% endfor %}
+  </select>
+  {% if status_filter %}<span class="badge badge-soft-primary">Showing {{ status_filter }} beds <a href="?room_type={{ selected_room_type }}" class="ms-1">×</a></span>{% endif %}
+</form>
+{% for room in rooms %}
+  <div class="card-hms">
+    <div class="card-hms-header">
+      <h2 class="card-hms-title"><i class="bi bi-door-closed"></i> Room {{ room.number }} <span class="badge badge-soft-secondary">{{ room.room_type }}</span></h2>
+      <span class="small text-muted">{% if room.department %}{{ room.department }} · {% endif %}{% if room.floor %}Floor {{ room.floor }}{% endif %}</span>
+    </div>
+    <div class="card-hms-body">
+      <div class="bed-grid">
+        {% for bed in room.beds.all %}
+          {% if not status_filter or bed.status == status_filter %}
+            {% with current=bed.current.0 %}
+            <{% if current and can.admissions_view %}a href="{% url 'admissions:detail' current.pk %}"{% elif bed.status == 'available' and can.admissions_manage %}a href="{% url 'admissions:create' %}?bed={{ bed.pk }}"{% else %}div{% endif %} class="bed-tile bed-{{ bed.status }}">
+              <div class="bed-no"><i class="bi bi-{% if bed.status == 'occupied' %}person-fill{% elif bed.status == 'maintenance' %}tools{% else %}plus-circle{% endif %}"></i> Bed {{ bed.bed_number }}</div>
+              <div class="mt-1">{{ bed.status|status_badge:bed.get_status_display }}</div>
+              {% if current %}
+                <div class="small fw-semibold mt-2 text-truncate">{{ current.patient.full_name }}</div>
+                <div class="cell-sub text-truncate">{{ current.attending_doctor }} · since {{ current.admitted_at|date:"d M" }}</div>
+              {% elif bed.status == 'available' %}
+                <div class="cell-sub mt-2">{% if can.admissions_manage %}Click to admit{% else %}Ready{% endif %}</div>
+              {% endif %}
+            </{% if current and can.admissions_view %}a{% elif bed.status == 'available' and can.admissions_manage %}a{% else %}div{% endif %}>
+            {% endwith %}
+          {% endif %}
+        {% empty %}
+          <p class="text-muted small mb-0">No beds in this room yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% empty %}
+  {% if can.beds_manage %}{% url 'admissions:room_create' as create_url %}{% endif %}
+  <div class="card-hms">{% include "components/empty_state.html" with icon="door-closed" title="No rooms configured" message="Add rooms and beds to start tracking occupancy." action_url=create_url action_label="Add room" %}</div>
+{% endfor %}
+{% endblock %}

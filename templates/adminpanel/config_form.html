@@ -1,0 +1,6 @@
+{% extends "layouts/admin_form_page.html" %}
+{% block title %}{{ section.title }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'adminpanel:config_list' section.slug %}">{{ section.title }}</a></li><li class="breadcrumb-item active">{% if obj %}{{ obj }}{% else %}New{% endif %}</li>{% endblock %}
+{% block page_title %}{% if obj %}Edit {{ section.singular }}: {{ obj }}{% else %}Add {{ section.singular }}{% endif %}{% endblock %}
+{% block page_subtitle %}{{ section.description }}{% endblock %}
+{% block cancel_url %}{% url 'adminpanel:config_list' section.slug %}{% endblock %}

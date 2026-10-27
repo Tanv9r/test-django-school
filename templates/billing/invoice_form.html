@@ -1,0 +1,66 @@
+{% extends "layouts/form_page.html" %}
+{% load static %}
+{% block title %}{% if invoice %}Edit {{ invoice.invoice_number }}{% else %}New invoice{% endif %}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'billing:invoice_list' %}">Invoices</a></li>{% if invoice %}<li class="breadcrumb-item"><a href="{% url 'billing:invoice_detail' invoice.pk %}">{{ invoice.invoice_number }}</a></li><li class="breadcrumb-item active">Edit</li>{% else %}<li class="breadcrumb-item active">New</li>{% endif %}{% endblock %}
+{% block page_title %}{% if invoice %}Edit invoice {{ invoice.invoice_number }}{% else %}Create an invoice{% endif %}{% endblock %}
+{% block page_subtitle %}Totals are recalculated on the server using exact decimal arithmetic.{% endblock %}
+{% block form_col %}col-xxl-11{% endblock %}
+{% block form_attrs %}data-invoice-form data-currency="{{ hospital.currency_symbol }}"{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <div class="form-section-title"><i class="bi bi-person"></i> Bill to</div>
+        <div class="row g-3">
+          {% include "components/field.html" with field=form.patient col="col-12" %}
+          {% include "components/field.html" with field=form.appointment %}
+          {% include "components/field.html" with field=form.admission %}
+          {% include "components/field.html" with field=form.add_consultation col="col-md-6" %}
+          {% include "components/field.html" with field=form.add_room_charges col="col-md-6" %}
+        </div>
+      </div>
+    </div>
+    <div class="card-hms" data-formset="items">
+      <div class="card-hms-header">
+        <h2 class="card-hms-title"><i class="bi bi-list-ul"></i> Charges</h2>
+        <button type="button" class="btn btn-sm btn-soft-primary" data-formset-add="items"><i class="bi bi-plus-lg"></i> Add line</button>
+      </div>
+      <div class="card-hms-body">
+        {{ formset.management_form }}
+        {% if formset.non_form_errors %}<div class="alert alert-danger"><i class="bi bi-exclamation-octagon mt-1"></i><div>{{ formset.non_form_errors|join:" " }}</div></div>{% endif %}
+        <p class="small text-muted">Consultation and room charges selected above are added automatically when you save.</p>
+        <div data-formset-rows>{% for f in formset %}{% include "billing/_item_row.html" with f=f %}{% endfor %}</div>
+        <template data-formset-template>{% include "billing/_item_row.html" with f=formset.empty_form %}</template>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <div class="form-section-title"><i class="bi bi-calendar"></i> Invoice details</div>
+        <div class="row g-3">
+          {% include "components/field.html" with field=form.issue_date col="col-6" %}
+          {% include "components/field.html" with field=form.due_date col="col-6" %}
+          {% include "components/field.html" with field=form.discount_amount col="col-12" %}
+          {% include "components/field.html" with field=form.notes col="col-12" %}
+        </div>
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Subtotal (manual lines)</span><span data-subtotal>—</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Discount</span><span data-discount>—</span></div>
+        <hr>
+        <div class="d-flex justify-content-between fs-5 fw-bold"><span>Estimated total</span><span data-total>—</span></div>
+        <div class="text-danger small mt-2 d-none" data-discount-warning>The discount is larger than the subtotal.</div>
+        <div class="small text-muted mt-2">Automatic consultation/room charges are added on save.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block cancel_url %}{% if invoice %}{% url 'billing:invoice_detail' invoice.pk %}{% else %}{% url 'billing:invoice_list' %}{% endif %}{% endblock %}
+{% block submit_label %}Save invoice{% endblock %}
+{% block extra_js %}<script src="{% static 'js/invoice.js' %}"></script>{% endblock %}

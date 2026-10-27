@@ -1,0 +1,14 @@
+<div class="formset-row {% if f.DELETE.value %}is-deleted{% endif %}">
+  {% for e in f.non_field_errors %}<div class="text-danger small mb-2">{{ e }}</div>{% endfor %}
+  <div class="row g-2 align-items-end">
+    <div class="col-md-2"><label class="form-label">Type</label>{{ f.item_type }}</div>
+    <div class="col-md-4"><label class="form-label">Description</label>{{ f.description }}{% for e in f.description.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-4 col-md-2"><label class="form-label">Qty</label>{{ f.quantity }}{% for e in f.quantity.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-4 col-md-2"><label class="form-label">Unit price</label>{{ f.unit_price }}{% for e in f.unit_price.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-4 col-md-2 d-flex align-items-center justify-content-end gap-2">
+      <span class="fw-semibold small text-nowrap" data-line-total>—</span>
+      <span class="d-none">{{ f.DELETE }}</span>
+      <button type="button" class="btn btn-light btn-icon text-danger" data-formset-remove title="Remove / restore"><i class="bi bi-trash"></i></button>
+    </div>
+  </div>
+</div>

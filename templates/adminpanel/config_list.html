@@ -1,0 +1,35 @@
+{% extends "layouts/admin.html" %}
+{% load hms_tags %}
+{% block title %}{{ section.title }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item">Configuration</li><li class="breadcrumb-item active">{{ section.title }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title"><i class="bi bi-{{ section.icon }}"></i> {{ section.title }}</h1><p class="page-subtitle">{{ section.description }} Records are deactivated rather than deleted to preserve history.</p></div>
+  <div class="page-actions"><a href="{% url 'adminpanel:config_create' section.slug %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add {{ section.singular }}</a></div>
+</div>
+<ul class="nav config-nav nav-pills mb-3 gap-1 flex-wrap">
+  {% for s in sections %}<li class="nav-item"><a class="nav-link {% if s.slug == section.slug %}active{% endif %}" href="{% url 'adminpanel:config_list' s.slug %}"><i class="bi bi-{{ s.icon }}"></i> {{ s.title }}</a></li>{% endfor %}
+</ul>
+<div class="card-hms">
+  {% if rows %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr>{% for attr, label in section.columns %}<th>{{ label }}</th>{% endfor %}<th>Status</th><th></th></tr></thead>
+    <tbody>{% for row in rows %}
+      <tr>
+        {% for cell in row.cells %}<td class="{% if forloop.first %}cell-title{% endif %}">{{ cell|default:"—"|truncatechars:80 }}</td>{% endfor %}
+        <td>{{ row.obj.is_active|active_badge }}</td>
+        <td class="text-end text-nowrap">
+          <a href="{% url 'adminpanel:config_edit' section.slug row.obj.pk %}" class="btn btn-sm btn-light"><i class="bi bi-pencil"></i></a>
+          <form method="post" action="{% url 'adminpanel:config_toggle' section.slug row.obj.pk %}" class="d-inline" data-confirm="{% if row.obj.is_active %}Deactivate “{{ row.obj }}”? It will no longer be offered in forms.{% else %}Reactivate “{{ row.obj }}”?{% endif %}" data-confirm-label="{% if row.obj.is_active %}Deactivate{% else %}Activate{% endif %}">
+            {% csrf_token %}<button type="submit" class="btn btn-sm btn-light"><i class="bi bi-power"></i></button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+    {% url 'adminpanel:config_create' section.slug as create_url %}
+    {% include "components/empty_state.html" with icon=section.icon title="Nothing configured yet" message="Add the first entry to make it available across the system." action_url=create_url action_label="Add new" %}
+  {% endif %}
+</div>
+{% endblock %}

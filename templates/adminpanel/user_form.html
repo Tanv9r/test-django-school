@@ -1,0 +1,23 @@
+{% extends "layouts/admin_form_page.html" %}
+{% block title %}New user{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'adminpanel:user_list' %}">Users</a></li><li class="breadcrumb-item active">New</li>{% endblock %}
+{% block page_title %}Create a user account{% endblock %}
+{% block page_subtitle %}{% if link_staff %}Will be linked to staff profile {{ link_staff.employee_id }} ({{ link_staff.full_name }}).{% elif link_doctor %}Will be linked to {{ link_doctor }}'s doctor profile.{% else %}Passwords are hashed with PBKDF2 and never stored in plain text.{% endif %}{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="card-hms"><div class="card-hms-body">
+  <div class="row g-3">
+    {% include "components/field.html" with field=form.username %}
+    {% include "components/field.html" with field=form.role %}
+    {% include "components/field.html" with field=form.first_name %}
+    {% include "components/field.html" with field=form.last_name %}
+    {% include "components/field.html" with field=form.email %}
+    {% include "components/field.html" with field=form.phone %}
+    {% include "components/field.html" with field=form.password1 %}
+    {% include "components/field.html" with field=form.password2 %}
+    {% include "components/field.html" with field=form.is_active col="col-12" %}
+  </div>
+</div></div>
+{% endblock %}
+{% block cancel_url %}{% url 'adminpanel:user_list' %}{% endblock %}
+{% block submit_label %}Create user{% endblock %}

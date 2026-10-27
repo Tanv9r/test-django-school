@@ -1,0 +1,28 @@
+{% extends "layouts/staff.html" %}
+{% block title %}Departments{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Departments</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Departments</h1><p class="page-subtitle">Clinical departments and their active doctors.</p></div>
+  <div class="page-actions">
+    <a href="{% if request.GET.show == 'all' %}{{ request.path }}{% else %}?show=all{% endif %}" class="btn btn-light"><i class="bi bi-eye"></i> {% if request.GET.show == 'all' %}Active only{% else %}Include inactive{% endif %}</a>
+    {% if can.adminpanel_access %}<a href="{% url 'adminpanel:config_list' 'departments' %}" class="btn btn-primary"><i class="bi bi-gear"></i> Manage departments</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3">
+  {% for dept in departments %}
+    <div class="col-md-6 col-xl-4">
+      <a href="{% url 'doctors:department_detail' dept.pk %}" class="stat-card">
+        <span class="stat-icon tone-{% cycle 'primary' 'success' 'info' 'warning' 'danger' %}"><i class="bi bi-building"></i></span>
+        <span class="min-w-0">
+          <span class="fw-semibold d-block">{{ dept.name }} {% if not dept.is_active %}<span class="badge badge-soft-secondary">Inactive</span>{% endif %}</span>
+          <span class="stat-hint d-block text-truncate">{{ dept.description|default:"No description" }}</span>
+          <span class="small text-muted d-block mt-1"><i class="bi bi-person-badge"></i> {{ dept.doctor_count }} active doctor{{ dept.doctor_count|pluralize }}{% if dept.location %} · <i class="bi bi-geo-alt"></i> {{ dept.location }}{% endif %}</span>
+        </span>
+      </a>
+    </div>
+  {% empty %}
+    <div class="col-12"><div class="card-hms">{% include "components/empty_state.html" with icon="building" title="No departments" message="An administrator can add departments from the admin panel." %}</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

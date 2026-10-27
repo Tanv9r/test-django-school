@@ -1,0 +1,12 @@
+{% if form.non_field_errors %}
+  <div class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-octagon mt-1"></i>
+    <div>{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>
+  </div>
+{% elif form.errors %}
+  <div class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-octagon mt-1"></i>
+    <div>Please correct the highlighted fields below.</div>
+  </div>
+{% endif %}
+{% for field in form.hidden_fields %}{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ field.label }}: {{ error }}</div>{% endfor %}{% endfor %}

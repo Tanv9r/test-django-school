@@ -1,0 +1,36 @@
+{% extends "layouts/staff.html" %}
+{% block title %}Search{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Search</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Search</h1><p class="page-subtitle">Results are limited to the records your role can access.</p></div>
+</div>
+<form method="get" class="card-hms filter-bar">
+  <div class="input-group">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input type="search" name="q" class="form-control" value="{{ q }}" placeholder="Name, ID, phone, invoice number…" autofocus minlength="2">
+    <button class="btn btn-primary" type="submit">Search</button>
+  </div>
+</form>
+{% if too_short %}
+  <div class="alert alert-info"><i class="bi bi-info-circle mt-1"></i><div>Type at least two characters to search.</div></div>
+{% elif q %}
+  {% for title, icon, items in results %}
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-{{ icon }}"></i> {{ title }}</h2><span class="badge badge-soft-primary">{{ items|length }}</span></div>
+      <div class="list-group list-group-flush">
+        {% for label, sub, url in items %}
+          <a href="{{ url }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3">
+            <span><span class="cell-title d-block">{{ label }}</span><span class="cell-sub">{{ sub }}</span></span>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="card-hms">{% include "components/empty_state.html" with icon="search" title="No matches" message="Try a different name, ID or phone number." %}</div>
+  {% endfor %}
+{% else %}
+  <div class="card-hms">{% include "components/empty_state.html" with icon="search" title="Search the hospital records" message="Find patients, doctors, appointments, invoices, medicines and staff in one place." %}</div>
+{% endif %}
+{% endblock %}

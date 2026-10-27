@@ -1,0 +1,54 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}{% if doctor %}Edit {{ doctor }}{% else %}Add doctor{% endif %}{% endblock %}
+{% block breadcrumbs %}
+  <li class="breadcrumb-item"><a href="{% url 'doctors:list' %}">Doctors</a></li>
+  {% if doctor %}<li class="breadcrumb-item"><a href="{% url 'doctors:detail' doctor.pk %}">{{ doctor }}</a></li><li class="breadcrumb-item active">Edit</li>{% else %}<li class="breadcrumb-item active">Add</li>{% endif %}
+{% endblock %}
+{% block page_title %}{% if doctor %}Edit {{ doctor }}{% else %}Register a doctor{% endif %}{% endblock %}
+{% block page_subtitle %}Profile, department assignment, fees and weekly working hours.{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-person-badge"></i> Profile</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.first_name %}
+      {% include "components/field.html" with field=form.last_name %}
+      {% include "components/field.html" with field=form.email %}
+      {% include "components/field.html" with field=form.phone %}
+      {% include "components/field.html" with field=form.department %}
+      {% include "components/field.html" with field=form.specialization %}
+      {% include "components/field.html" with field=form.qualifications col="col-12" %}
+      {% include "components/field.html" with field=form.bio %}
+    </div>
+  </div>
+</div>
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-gear"></i> Practice settings</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.consultation_fee col="col-md-4" %}
+      {% include "components/field.html" with field=form.slot_minutes col="col-md-4" %}
+      {% include "components/field.html" with field=form.user col="col-md-4" %}
+      {% include "components/field.html" with field=form.is_active col="col-12" %}
+    </div>
+  </div>
+</div>
+<div class="card-hms" data-formset="availability">
+  <div class="card-hms-header">
+    <h2 class="card-hms-title"><i class="bi bi-clock"></i> Weekly working hours</h2>
+    <button type="button" class="btn btn-sm btn-soft-primary" data-formset-add="availability"><i class="bi bi-plus-lg"></i> Add hours</button>
+  </div>
+  <div class="card-hms-body">
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="alert alert-danger"><i class="bi bi-exclamation-octagon mt-1"></i><div>{{ formset.non_form_errors|join:" " }}</div></div>{% endif %}
+    <p class="small text-muted">Appointments can only be booked inside these windows (local time, {{ local_tz }}).</p>
+    <div data-formset-rows>
+      {% for f in formset %}{% include "doctors/_availability_row.html" with f=f %}{% endfor %}
+    </div>
+    <template data-formset-template>{% include "doctors/_availability_row.html" with f=formset.empty_form %}</template>
+  </div>
+</div>
+{% endblock %}
+{% block cancel_url %}{% if doctor %}{% url 'doctors:detail' doctor.pk %}{% else %}{% url 'doctors:list' %}{% endif %}{% endblock %}
+{% block submit_label %}Save doctor{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Pharmacy inventory{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Pharmacy</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Medicine inventory</h1><p class="page-subtitle">{{ page_obj.paginator.count }} item{{ page_obj.paginator.count|pluralize }} shown</p></div>
+  <div class="page-actions">
+    <a href="{% url 'pharmacy:transactions' %}" class="btn btn-light"><i class="bi bi-arrow-left-right"></i> Stock movements</a>
+    {% if can.pharmacy_manage %}<a href="{% url 'pharmacy:create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Add medicine</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><a href="?stock=low" class="stat-card"><span class="stat-icon tone-warning"><i class="bi bi-box-seam"></i></span><span><span class="stat-value d-block">{{ alerts.low }}</span><span class="stat-label">Low stock</span></span></a></div>
+  <div class="col-6 col-lg-3"><a href="?stock=out" class="stat-card"><span class="stat-icon tone-danger"><i class="bi bi-x-octagon"></i></span><span><span class="stat-value d-block">{{ alerts.out }}</span><span class="stat-label">Out of stock</span></span></a></div>
+  <div class="col-6 col-lg-3"><a href="?stock=expiring" class="stat-card"><span class="stat-icon tone-info"><i class="bi bi-calendar-x"></i></span><span><span class="stat-value d-block">{{ alerts.expiring }}</span><span class="stat-label">Expiring ≤ {{ warning_days }} days</span></span></a></div>
+  <div class="col-6 col-lg-3"><a href="?stock=expired" class="stat-card"><span class="stat-icon tone-secondary"><i class="bi bi-trash3"></i></span><span><span class="stat-value d-block">{{ alerts.expired }}</span><span class="stat-label">Expired with stock</span></span></a></div>
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if medicines %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr><th>Medicine</th><th>Category</th><th>Batch</th><th class="text-end">Stock</th><th class="text-end">Unit price</th><th>Expiry</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for m in medicines %}
+          <tr>
+            <td><a href="{% url 'pharmacy:detail' m.pk %}" class="cell-title">{{ m.name }}</a><div class="cell-sub">{{ m.generic_name|default:m.manufacturer }}</div></td>
+            <td>{{ m.category }}</td>
+            <td>{{ m.batch_number }}</td>
+            <td class="text-end"><span class="fw-semibold {% if m.is_low_stock %}text-danger{% endif %}">{{ m.quantity }}</span> <span class="cell-sub">{{ m.unit }}</span></td>
+            <td class="text-end">{% money m.unit_price %}</td>
+            <td><span class="{% if m.is_expired %}text-danger fw-semibold{% elif m.days_to_expiry <= warning_days %}text-warning fw-semibold{% endif %}">{{ m.expiry_date|date:"d M Y" }}</span></td>
+            <td>
+              {% if not m.is_active %}<span class="badge badge-soft-secondary">Inactive</span>
+              {% elif m.quantity == 0 %}<span class="badge badge-soft-danger">Out of stock</span>
+              {% elif m.is_expired %}<span class="badge badge-soft-danger">Expired</span>
+              {% elif m.days_to_expiry <= warning_days %}<span class="badge badge-soft-warning">Expiring</span>
+              {% elif m.is_low_stock %}<span class="badge badge-soft-warning">Low</span>
+              {% else %}<span class="badge badge-soft-success">In stock</span>{% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              {% if can.pharmacy_manage %}<a href="{% url 'pharmacy:adjust' m.pk %}" class="btn btn-sm btn-soft-primary" title="Adjust stock" data-bs-toggle="tooltip"><i class="bi bi-plus-slash-minus"></i></a>{% endif %}
+              <a href="{% url 'pharmacy:detail' m.pk %}" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% if can.pharmacy_manage %}{% url 'pharmacy:create' as create_url %}{% endif %}
+    {% include "components/empty_state.html" with icon="capsule" title="No medicines found" message="No inventory items match these filters." action_url=create_url action_label="Add medicine" %}
+  {% endif %}
+</div>
+{% endblock %}

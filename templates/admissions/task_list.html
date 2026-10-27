@@ -1,0 +1,43 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Nursing tasks{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Nursing tasks</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Nursing tasks</h1><p class="page-subtitle">{% if user.effective_role == 'nurse' %}Tasks for your assigned patients{% else %}Tasks for current inpatients{% endif %}</p></div>
+</div>
+<ul class="nav nav-pills-hms mb-3">
+  <li class="nav-item"><a class="nav-link {% if status == 'open' %}active{% endif %}" href="?status=open">Open</a></li>
+  {% for value, label in statuses %}<li class="nav-item"><a class="nav-link {% if status == value %}active{% endif %}" href="?status={{ value }}">{{ label }}</a></li>{% endfor %}
+  <li class="nav-item"><a class="nav-link {% if status == 'all' %}active{% endif %}" href="?status=all">All</a></li>
+</ul>
+<div class="card-hms">
+  {% if tasks %}
+    <div class="table-responsive"><table class="table table-hms">
+      <thead><tr><th>Task</th><th>Patient / bed</th><th>Due</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+      <tbody>{% for t in tasks %}
+        <tr>
+          <td><span class="cell-title">{{ t.title }}</span>{% if t.details %}<div class="cell-sub">{{ t.details|truncatechars:80 }}</div>{% endif %}</td>
+          <td><a href="{% url 'admissions:detail' t.admission.pk %}">{{ t.admission.patient.full_name }}</a><div class="cell-sub">{{ t.admission.bed.label }}</div></td>
+          <td>{% if t.due_at %}<span class="{% if t.due_at < now and t.status != 'done' %}text-danger fw-semibold{% endif %}">{{ t.due_at|date:"d M H:i" }}</span>{% else %}—{% endif %}</td>
+          <td>{{ t.priority|status_badge:t.get_priority_display }}</td>
+          <td>{{ t.status|status_badge:t.get_status_display }}</td>
+          <td class="text-end text-nowrap">
+            {% if can.nursing_manage %}
+              <form method="post" action="{% url 'admissions:task_status' t.pk %}" class="d-inline">
+                {% csrf_token %}<input type="hidden" name="next" value="tasks">
+                {% if t.status == 'pending' %}<input type="hidden" name="status" value="in_progress"><button class="btn btn-sm btn-light" type="submit">Start</button>
+                {% elif t.status == 'in_progress' %}<input type="hidden" name="status" value="done"><button class="btn btn-sm btn-success" type="submit">Complete</button>
+                {% else %}<input type="hidden" name="status" value="pending"><button class="btn btn-sm btn-light" type="submit">Reopen</button>{% endif %}
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% include "components/empty_state.html" with icon="clipboard2-check" title="No tasks here" message="Tasks are created from an admission's page." %}
+  {% endif %}
+</div>
+{% endblock %}

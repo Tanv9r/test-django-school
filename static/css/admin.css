@@ -1,0 +1,88 @@
+/* ==========================================================================
+   Custom admin panel – dark gradient theme
+   ========================================================================== */
+body.theme-admin {
+  --hms-bg: #111827;
+  --hms-card: #1F2937;
+  --hms-nav: #111827;
+  --hms-nav-text: #9CA3AF;
+  --hms-nav-active: rgba(96, 165, 250, .10);
+  --hms-primary: #60A5FA;
+  --hms-primary-rgb: 96, 165, 250;
+  --hms-border: rgba(148, 163, 184, .16);
+  --hms-text: #F9FAFB;
+  --hms-muted: #9CA3AF;
+  --hms-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+  --hms-shadow-hover: 0 16px 40px rgba(0, 0, 0, .35);
+
+  --bs-body-bg: #1F2937;
+  --bs-body-color: #F9FAFB;
+  --bs-secondary-color: #9CA3AF;
+  --bs-tertiary-bg: #273244;
+  --bs-border-color: rgba(148, 163, 184, .2);
+  --bs-emphasis-color: #F9FAFB;
+  --bs-link-color: #60A5FA;
+  --bs-link-hover-color: #93C5FD;
+
+  background: linear-gradient(135deg, #111827 0%, #312E81 55%, #1D4ED8 100%) fixed;
+  color: var(--hms-text);
+}
+
+/* Sidebar */
+body.theme-admin .app-sidebar { background: #111827; border-right: 1px solid rgba(148, 163, 184, .1); }
+body.theme-admin .sidebar-brand .brand-logo { background: linear-gradient(135deg, #818CF8, #3B82F6); box-shadow: 0 8px 20px rgba(99, 102, 241, .45); }
+body.theme-admin .sidebar-link.active { background: linear-gradient(90deg, rgba(96, 165, 250, .25), rgba(96, 165, 250, .08)); color: #F9FAFB; box-shadow: inset 3px 0 0 #60A5FA; }
+body.theme-admin .admin-badge { font-size: .62rem; padding: .2rem .5rem; border-radius: 6px; background: rgba(96, 165, 250, .15); color: #60A5FA; font-weight: 700; letter-spacing: .06em; }
+
+/* Topbar */
+body.theme-admin .app-topbar { background: rgba(17, 24, 39, .55); border-bottom-color: rgba(148, 163, 184, .12); }
+body.theme-admin .topbar-search input { background: rgba(31, 41, 55, .8); color: #F9FAFB; }
+body.theme-admin .topbar-search input::placeholder { color: #6B7280; }
+body.theme-admin .topbar-icon, body.theme-admin .user-chip { color: #F9FAFB; }
+body.theme-admin .topbar-icon:hover, body.theme-admin .user-chip:hover { background: rgba(255, 255, 255, .06); }
+
+/* Cards */
+body.theme-admin .card-hms, body.theme-admin .stat-card {
+  background: rgba(31, 41, 55, .92); border-color: rgba(148, 163, 184, .12); color: var(--hms-text);
+  backdrop-filter: blur(6px);
+}
+body.theme-admin a.stat-card:hover { color: var(--hms-text); }
+body.theme-admin .stat-card .stat-icon { background: rgba(96, 165, 250, .14); color: #60A5FA; }
+body.theme-admin .stat-card.accent-violet .stat-icon { background: rgba(167, 139, 250, .15); color: #A78BFA; }
+body.theme-admin .stat-card.accent-emerald .stat-icon { background: rgba(52, 211, 153, .14); color: #34D399; }
+body.theme-admin .stat-card.accent-amber .stat-icon { background: rgba(251, 191, 36, .14); color: #FBBF24; }
+body.theme-admin .stat-card.accent-rose .stat-icon { background: rgba(251, 113, 133, .14); color: #FB7185; }
+body.theme-admin .hero-panel {
+  border-radius: var(--hms-radius); padding: 1.5rem; margin-bottom: 1.5rem;
+  background: linear-gradient(120deg, rgba(96, 165, 250, .18), rgba(129, 140, 248, .12) 60%, rgba(17, 24, 39, .2));
+  border: 1px solid rgba(148, 163, 184, .14);
+}
+
+/* Tables, forms, misc */
+body.theme-admin .table-hms { --bs-table-color: #E5E7EB; }
+body.theme-admin .table-hms thead th { background: rgba(17, 24, 39, .45); color: #9CA3AF; }
+body.theme-admin .table-hms tbody tr:hover { background: rgba(96, 165, 250, .06); }
+body.theme-admin .form-control, body.theme-admin .form-select { background-color: rgba(17, 24, 39, .6); border-color: rgba(148, 163, 184, .2); color: #F9FAFB; }
+body.theme-admin .form-control::placeholder { color: #6B7280; }
+body.theme-admin .form-control:focus, body.theme-admin .form-select:focus { background-color: rgba(17, 24, 39, .8); color: #F9FAFB; }
+body.theme-admin .btn-primary { --bs-btn-bg: #3B82F6; --bs-btn-border-color: #3B82F6; --bs-btn-hover-bg: #2563EB; --bs-btn-hover-border-color: #2563EB; box-shadow: 0 6px 16px rgba(59, 130, 246, .35); }
+body.theme-admin .btn-light { --bs-btn-bg: rgba(255, 255, 255, .06); --bs-btn-border-color: rgba(148, 163, 184, .2); --bs-btn-color: #F9FAFB; --bs-btn-hover-bg: rgba(255, 255, 255, .12); --bs-btn-hover-color: #fff; --bs-btn-hover-border-color: rgba(148, 163, 184, .3); }
+body.theme-admin .badge-soft-success { color: #4ADE80; background: rgba(74, 222, 128, .12); }
+body.theme-admin .badge-soft-danger { color: #F87171; background: rgba(248, 113, 113, .13); }
+body.theme-admin .badge-soft-warning { color: #FBBF24; background: rgba(251, 191, 36, .14); }
+body.theme-admin .badge-soft-secondary { color: #CBD5E1; background: rgba(148, 163, 184, .16); }
+body.theme-admin .badge-soft-info { color: #67E8F9; background: rgba(103, 232, 249, .12); }
+body.theme-admin .alert-success { background: rgba(74, 222, 128, .12); color: #BBF7D0; }
+body.theme-admin .alert-danger { background: rgba(248, 113, 113, .14); color: #FECACA; }
+body.theme-admin .alert-info { background: rgba(96, 165, 250, .14); color: #BFDBFE; }
+body.theme-admin .alert-warning { background: rgba(251, 191, 36, .14); color: #FDE68A; }
+body.theme-admin .breadcrumb-item.active { color: #E5E7EB; }
+body.theme-admin .app-footer { border-top-color: rgba(148, 163, 184, .12); }
+body.theme-admin .dropdown-menu { --bs-dropdown-bg: #1F2937; --bs-dropdown-link-color: #E5E7EB; --bs-dropdown-link-hover-bg: rgba(96, 165, 250, .1); --bs-dropdown-link-hover-color: #fff; --bs-dropdown-border-color: rgba(148, 163, 184, .16); --bs-dropdown-divider-bg: rgba(148, 163, 184, .16); --bs-dropdown-header-color: #9CA3AF; }
+body.theme-admin .modal-content { background: #1F2937; color: #F9FAFB; border-color: rgba(148, 163, 184, .16); }
+body.theme-admin .page-link { background: rgba(31, 41, 55, .9); border-color: rgba(148, 163, 184, .2); color: #E5E7EB; }
+body.theme-admin .page-item.active .page-link { background: #3B82F6; border-color: #3B82F6; color: #fff; }
+body.theme-admin .activity-item { border-bottom: 1px solid rgba(148, 163, 184, .1); padding: .7rem 0; }
+body.theme-admin .activity-item:last-child { border-bottom: 0; }
+body.theme-admin .config-nav .nav-link { color: #9CA3AF; border-radius: 10px; }
+body.theme-admin .config-nav .nav-link.active, body.theme-admin .config-nav .nav-link:hover { background: rgba(96, 165, 250, .12); color: #F9FAFB; }

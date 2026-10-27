@@ -1,0 +1,97 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ admission.admission_number }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:list' %}">Admissions</a></li><li class="breadcrumb-item active">{{ admission.admission_number }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ admission.admission_number }} {{ admission.status|status_badge:admission.get_status_display }}</h1>
+    <p class="page-subtitle">{{ admission.patient.full_name }} ({{ admission.patient.patient_id }}) · {{ admission.bed.label }} · {{ admission.length_of_stay_days }} day(s)</p>
+  </div>
+  <div class="page-actions">
+    {% if can.patients_view %}<a href="{% url 'patients:detail' admission.patient.pk %}" class="btn btn-light"><i class="bi bi-person"></i> Patient</a>{% endif %}
+    {% if can_manage %}<a href="{% url 'admissions:edit' admission.pk %}" class="btn btn-light"><i class="bi bi-people"></i> Care team</a>{% endif %}
+    {% if can.billing_manage %}<a href="{% url 'billing:invoice_create' %}?patient={{ admission.patient.pk }}" class="btn btn-light"><i class="bi bi-receipt"></i> Invoice</a>{% endif %}
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-info-circle"></i> Admission details</h2></div>
+      <div class="card-hms-body">
+        <dl class="detail-list">
+          <div><dt>Admitted</dt><dd>{{ admission.admitted_at|date:"d M Y, H:i" }}{% if admission.admitted_by %}<div class="cell-sub">by {{ admission.admitted_by }}</div>{% endif %}</dd></div>
+          <div><dt>Bed</dt><dd>{{ admission.bed.label }}<div class="cell-sub">{{ admission.bed.room.room_type }} · {% money admission.bed.room.room_type.daily_rate %}/day</div></dd></div>
+          <div><dt>Attending doctor</dt><dd>{{ admission.attending_doctor }}</dd></div>
+          <div><dt>Assigned nurse</dt><dd>{{ admission.assigned_nurse.get_full_name|default:"—" }}</dd></div>
+          <div><dt>Room charges to date</dt><dd>{% money room_charge_estimate %}<div class="cell-sub">{{ admission.length_of_stay_days }} billable day(s)</div></dd></div>
+          <div style="grid-column:1/-1"><dt>Reason for admission</dt><dd class="prose">{{ admission.reason }}</dd></div>
+          {% if admission.discharged_at %}
+            <div><dt>Discharged</dt><dd>{{ admission.discharged_at|date:"d M Y, H:i" }}{% if admission.discharged_by %}<div class="cell-sub">by {{ admission.discharged_by }}</div>{% endif %}</dd></div>
+            <div style="grid-column:1/-1"><dt>Discharge summary</dt><dd class="prose">{{ admission.discharge_summary }}</dd></div>
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+
+    {% if tasks is not None %}
+    <div class="card-hms">
+      <div class="card-hms-header">
+        <h2 class="card-hms-title"><i class="bi bi-clipboard2-pulse"></i> Nursing tasks</h2>
+        {% if can_add_task %}<a href="{% url 'admissions:task_create' admission.pk %}" class="btn btn-sm btn-soft-primary"><i class="bi bi-plus-lg"></i> Add task</a>{% endif %}
+      </div>
+      {% if tasks %}
+        <div class="table-responsive"><table class="table table-hms">
+          <thead><tr><th>Task</th><th>Due</th><th>Priority</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
+          <tbody>{% for t in tasks %}
+            <tr>
+              <td><span class="cell-title">{{ t.title }}</span>{% if t.details %}<div class="cell-sub">{{ t.details|truncatechars:80 }}</div>{% endif %}</td>
+              <td>{{ t.due_at|date:"d M H:i"|default:"—" }}</td>
+              <td>{{ t.priority|status_badge:t.get_priority_display }}</td>
+              <td>{{ t.assigned_to.get_full_name|default:"—" }}</td>
+              <td>{{ t.status|status_badge:t.get_status_display }}{% if t.completed_by %}<div class="cell-sub">{{ t.completed_by }}</div>{% endif %}</td>
+              <td class="text-end text-nowrap">
+                {% if can.nursing_manage and admission.status == 'admitted' %}
+                  {% if t.status != 'done' %}
+                    <form method="post" action="{% url 'admissions:task_status' t.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="status" value="{% if t.status == 'pending' %}in_progress{% else %}done{% endif %}"><button class="btn btn-sm btn-light" type="submit">{% if t.status == 'pending' %}Start{% else %}Complete{% endif %}</button></form>
+                  {% else %}
+                    <form method="post" action="{% url 'admissions:task_status' t.pk %}" class="d-inline">{% csrf_token %}<input type="hidden" name="status" value="pending"><button class="btn btn-sm btn-light" type="submit">Reopen</button></form>
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% else %}
+        <div class="card-hms-body text-muted small">No nursing tasks for this admission.</div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    {% if can_discharge %}
+    <form method="post" action="{% url 'admissions:discharge' admission.pk %}" class="card-hms" data-confirm="Discharge {{ admission.patient.full_name }}? The bed will be released immediately." data-confirm-label="Discharge patient" data-confirm-class="btn-success">
+      {% csrf_token %}
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-box-arrow-right"></i> Discharge patient</h2></div>
+      <div class="card-hms-body">
+        <div class="row g-3">
+          {% include "components/field.html" with field=discharge_form.discharged_at col="col-12" %}
+          {% include "components/field.html" with field=discharge_form.discharge_summary col="col-12" %}
+        </div>
+      </div>
+      <div class="card-hms-footer"><button type="submit" class="btn btn-success w-100"><i class="bi bi-check2-circle"></i> Discharge &amp; release bed</button></div>
+    </form>
+    {% endif %}
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <div class="small-caps mb-2">Patient</div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="avatar">{{ admission.patient.full_name|initials }}</span>
+          <div><div class="fw-semibold">{{ admission.patient.full_name }}</div><div class="cell-sub">{{ admission.patient.age }} yrs · {{ admission.patient.get_gender_display }}{% if can.patients_view_clinical %} · {{ admission.patient.blood_group }}{% endif %}</div></div>
+        </div>
+        {% if can.patients_view_clinical and admission.patient.allergies %}<div class="alert alert-danger mt-3 mb-0 py-2 small"><i class="bi bi-exclamation-triangle mt-1"></i><div><strong>Allergies:</strong> {{ admission.patient.allergies }}</div></div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

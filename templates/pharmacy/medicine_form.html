@@ -1,0 +1,7 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}{% if medicine %}Edit {{ medicine.name }}{% else %}Add medicine{% endif %}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'pharmacy:list' %}">Pharmacy</a></li>{% if medicine %}<li class="breadcrumb-item"><a href="{% url 'pharmacy:detail' medicine.pk %}">{{ medicine.name }}</a></li><li class="breadcrumb-item active">Edit</li>{% else %}<li class="breadcrumb-item active">Add</li>{% endif %}{% endblock %}
+{% block page_title %}{% if medicine %}Edit {{ medicine.name }}{% else %}Add a medicine{% endif %}{% endblock %}
+{% block page_subtitle %}{% if medicine %}Quantity changes are made through stock adjustments so every movement is recorded.{% else %}Opening stock is recorded as the first stock transaction.{% endif %}{% endblock %}
+{% block cancel_url %}{% if medicine %}{% url 'pharmacy:detail' medicine.pk %}{% else %}{% url 'pharmacy:list' %}{% endif %}{% endblock %}
+{% block submit_label %}Save medicine{% endblock %}

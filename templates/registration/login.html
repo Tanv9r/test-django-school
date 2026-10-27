@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body_class %}theme-staff{% endblock %}
+{% block body %}
+<div class="auth-wrap">
+  <section class="auth-hero">
+    <div class="d-flex align-items-center gap-3">
+      <span class="brand-logo d-grid" style="width:48px;height:48px;border-radius:14px;place-items:center;background:rgba(255,255,255,.14);font-size:1.4rem;"><i class="bi bi-hospital"></i></span>
+      <div>
+        <div class="fw-bold fs-5">{{ hospital.name }}</div>
+        <div class="small opacity-75">{{ hospital.tagline }}</div>
+      </div>
+    </div>
+    <div style="position:relative;z-index:1;max-width:460px;">
+      <h1 class="fw-bold mb-3" style="font-size:2.2rem;letter-spacing:-.02em;">One workspace for every ward, desk and pharmacy counter.</h1>
+      <p class="opacity-75 mb-4">Patients, appointments, admissions, prescriptions and billing — connected and secured by role.</p>
+      <div class="feature"><i class="bi bi-calendar2-check"></i><div><strong>Conflict-free scheduling</strong><div class="small opacity-75">Doctor availability is checked on every booking.</div></div></div>
+      <div class="feature"><i class="bi bi-shield-check"></i><div><strong>Role-based access</strong><div class="small opacity-75">Clinical and financial data visible only to authorised staff.</div></div></div>
+      <div class="feature"><i class="bi bi-graph-up-arrow"></i><div><strong>Live dashboards</strong><div class="small opacity-75">Occupancy, revenue and workload from real records.</div></div></div>
+    </div>
+    <div class="small opacity-50">Software prototype — not a certified clinical system.</div>
+  </section>
+  <section class="auth-form-side">
+    <div class="auth-card">
+      <div class="mb-4">
+        <h2 class="fw-bold mb-1">Welcome back</h2>
+        <p class="text-muted mb-0">Sign in with your staff credentials.</p>
+      </div>
+      {% include "components/messages.html" %}
+      {% if form.errors %}
+        <div class="alert alert-danger"><i class="bi bi-exclamation-octagon mt-1"></i><div>{% for e in form.non_field_errors %}{{ e }}{% empty %}Please enter your username and password.{% endfor %}</div></div>
+      {% endif %}
+      <form method="post" data-loading novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+            {{ form.username }}
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-lock"></i></span>
+            {{ form.password }}
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100 py-2"><i class="bi bi-box-arrow-in-right"></i> Sign in</button>
+      </form>
+      <p class="small text-muted mt-4 mb-0"><i class="bi bi-info-circle"></i> Forgot your password? Ask a system administrator to reset it.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ department.name }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'doctors:department_list' %}">Departments</a></li><li class="breadcrumb-item active">{{ department.name }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ department.name }} {{ department.is_active|active_badge }}</h1>
+    <p class="page-subtitle">{{ department.description|default:"No description provided." }}{% if department.location %} · {{ department.location }}{% endif %}</p>
+  </div>
+  {% if can.adminpanel_access %}<div class="page-actions"><a href="{% url 'adminpanel:config_edit' 'departments' department.pk %}" class="btn btn-light"><i class="bi bi-pencil"></i> Edit department</a></div>{% endif %}
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6"><div class="stat-card"><span class="stat-icon tone-primary"><i class="bi bi-person-badge"></i></span><span><span class="stat-value d-block">{{ doctors|length }}</span><span class="stat-label">Active doctors</span></span></div></div>
+  <div class="col-sm-6"><div class="stat-card"><span class="stat-icon tone-success"><i class="bi bi-calendar-check"></i></span><span><span class="stat-value d-block">{{ upcoming_count }}</span><span class="stat-label">Upcoming appointments</span></span></div></div>
+</div>
+<div class="card-hms">
+  <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-people"></i> Assigned doctors</h2></div>
+  {% if doctors %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>Doctor</th><th>Specialization</th><th>Phone</th><th class="text-end">Fee</th></tr></thead>
+    <tbody>{% for d in doctors %}
+      <tr><td><div class="d-flex align-items-center gap-2"><span class="avatar avatar-sm">{{ d.full_name|initials }}</span><a href="{% url 'doctors:detail' d.pk %}" class="cell-title">{{ d }}</a></div></td><td>{{ d.specialization }}</td><td>{{ d.phone }}</td><td class="text-end">{% money d.consultation_fee %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+    {% include "components/empty_state.html" with icon="person-badge" title="No doctors assigned" message="Assign doctors to this department from their profile." %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}Adjust stock{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'pharmacy:list' %}">Pharmacy</a></li><li class="breadcrumb-item"><a href="{% url 'pharmacy:detail' medicine.pk %}">{{ medicine.name }}</a></li><li class="breadcrumb-item active">Adjust stock</li>{% endblock %}
+{% block page_title %}Adjust stock · {{ medicine.name }}{% endblock %}
+{% block page_subtitle %}Current balance: <strong>{{ medicine.quantity }} {{ medicine.unit }}</strong> · batch {{ medicine.batch_number }}. Stock can never go below zero.{% endblock %}
+{% block form_col %}col-lg-7{% endblock %}
+{% block cancel_url %}{% url 'pharmacy:detail' medicine.pk %}{% endblock %}
+{% block submit_label %}Record movement{% endblock %}

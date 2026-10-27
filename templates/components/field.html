@@ -1,0 +1,13 @@
+<div class="{% if col %}{{ col }}{% elif field.widget_type == 'textarea' %}col-12{% else %}col-md-6{% endif %}">
+  {% if field.widget_type == 'checkbox' %}
+    <div class="form-check form-switch {% if not col %}mt-md-4 pt-md-2{% endif %}">
+      {{ field }}
+      <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    </div>
+  {% else %}
+    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
+  {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+</div>

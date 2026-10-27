@@ -1,0 +1,84 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ invoice.invoice_number }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'billing:invoice_list' %}">Invoices</a></li><li class="breadcrumb-item active">{{ invoice.invoice_number }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Invoice {{ invoice.invoice_number }} {{ invoice.status|status_badge:invoice.get_status_display }}{% if invoice.is_overdue %} <span class="badge badge-soft-danger">Overdue</span>{% endif %}</h1>
+    <p class="page-subtitle">{{ invoice.patient.full_name }} ({{ invoice.patient.patient_id }}) · issued {{ invoice.issue_date|date:"d M Y" }}{% if invoice.due_date %} · due {{ invoice.due_date|date:"d M Y" }}{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'billing:invoice_print' invoice.pk %}" target="_blank" rel="noopener" class="btn btn-light"><i class="bi bi-printer"></i> Print</a>
+    {% if can.billing_manage and invoice.is_editable %}<a href="{% url 'billing:invoice_edit' invoice.pk %}" class="btn btn-light"><i class="bi bi-pencil"></i> Edit</a>{% endif %}
+    {% if can.billing_manage and payment_form %}<a href="{% url 'billing:payment_create' invoice.pk %}" class="btn btn-primary"><i class="bi bi-cash-coin"></i> Record payment</a>{% endif %}
+  </div>
+</div>
+{% if invoice.status == 'cancelled' %}<div class="alert alert-warning"><i class="bi bi-x-octagon mt-1"></i><div>Cancelled on {{ invoice.cancelled_at|date:"d M Y, H:i" }}: {{ invoice.cancellation_reason }}</div></div>{% endif %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-list-ul"></i> Charges</h2></div>
+      <div class="table-responsive"><table class="table table-hms">
+        <thead><tr><th>Description</th><th>Type</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Amount</th></tr></thead>
+        <tbody>
+          {% for item in items %}
+            <tr><td class="cell-title">{{ item.description }}</td><td>{{ item.get_item_type_display }}</td><td class="text-end">{{ item.quantity|floatformat:"-2" }}</td><td class="text-end">{% money item.unit_price %}</td><td class="text-end fw-semibold">{% money item.line_total %}</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="4" class="text-end text-muted">Subtotal</td><td class="text-end">{% money invoice.subtotal %}</td></tr>
+          <tr><td colspan="4" class="text-end text-muted">Discount</td><td class="text-end">−{% money invoice.discount_amount %}</td></tr>
+          <tr><td colspan="4" class="text-end fw-bold">Total</td><td class="text-end fw-bold fs-6">{% money invoice.total %}</td></tr>
+          <tr><td colspan="4" class="text-end text-muted">Paid</td><td class="text-end text-success">{% money invoice.amount_paid %}</td></tr>
+          <tr><td colspan="4" class="text-end fw-bold">Balance due</td><td class="text-end fw-bold {% if invoice.balance_due > 0 %}text-danger{% endif %}">{% money invoice.balance_due %}</td></tr>
+        </tfoot>
+      </table></div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-cash-coin"></i> Payment history</h2></div>
+      {% if payments %}
+        <div class="table-responsive"><table class="table table-hms">
+          <thead><tr><th>Payment</th><th>Date</th><th>Method</th><th>Reference</th><th>Received by</th><th class="text-end">Amount</th></tr></thead>
+          <tbody>{% for p in payments %}
+            <tr><td class="cell-title">{{ p.payment_number }}</td><td>{{ p.paid_at|date:"d M Y, H:i" }}</td><td>{{ p.method }}</td><td>{{ p.reference|default:"—" }}</td><td>{{ p.received_by|default:"—" }}</td><td class="text-end fw-semibold">{% money p.amount %}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% else %}
+        <div class="card-hms-body text-muted small">No payments recorded yet. The invoice is only marked paid once a payment covering the total is recorded.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <div class="small-caps mb-1">Balance due</div>
+        <div class="stat-value {% if invoice.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">{% money invoice.balance_due %}</div>
+        <div class="progress progress-thin mt-3"><div class="progress-bar bg-success" style="width: {{ invoice.amount_paid|percent:invoice.total }}%"></div></div>
+        <div class="small text-muted mt-1">{{ invoice.amount_paid|percent:invoice.total }}% paid</div>
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <dl class="detail-list" style="grid-template-columns:1fr;">
+          <div><dt>Patient</dt><dd>{{ invoice.patient.full_name }}<div class="cell-sub">{{ invoice.patient.phone }}</div></dd></div>
+          {% if invoice.appointment %}<div><dt>Appointment</dt><dd>{{ invoice.appointment.reference }} · {{ invoice.appointment.doctor }}</dd></div>{% endif %}
+          {% if invoice.admission %}<div><dt>Admission</dt><dd>{{ invoice.admission.admission_number }}</dd></div>{% endif %}
+          <div><dt>Created by</dt><dd>{{ invoice.created_by|default:"—" }} · {{ invoice.created_at|date:"d M Y" }}</dd></div>
+          {% if invoice.notes %}<div><dt>Notes</dt><dd class="prose">{{ invoice.notes }}</dd></div>{% endif %}
+        </dl>
+      </div>
+    </div>
+    {% if can.billing_manage and cancel_form %}
+    <form method="post" action="{% url 'billing:invoice_cancel' invoice.pk %}" class="card-hms" data-confirm="Cancel this invoice? This cannot be undone." data-confirm-label="Cancel invoice">
+      {% csrf_token %}
+      <div class="card-hms-body">
+        <div class="small-caps mb-2">Cancel invoice</div>
+        <input name="reason" class="form-control mb-2" maxlength="255" required placeholder="Reason for cancellation">
+        <button type="submit" class="btn btn-light text-danger w-100"><i class="bi bi-x-circle"></i> Cancel invoice</button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

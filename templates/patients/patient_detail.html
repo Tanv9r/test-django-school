@@ -1,0 +1,169 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ patient.full_name }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'patients:list' %}">Patients</a></li><li class="breadcrumb-item active">{{ patient.full_name }}</li>{% endblock %}
+{% block content %}
+{% if not patient.is_active %}
+  <div class="alert alert-warning"><i class="bi bi-archive mt-1"></i><div>This record was archived on {{ patient.archived_at|date:"d M Y" }}. It is kept for clinical and financial history.</div></div>
+{% endif %}
+<div class="card-hms mb-4">
+  <div class="card-hms-body d-flex flex-wrap gap-4 align-items-center">
+    <span class="avatar avatar-lg">{{ patient.full_name|initials }}</span>
+    <div class="flex-fill">
+      <h1 class="page-title mb-1">{{ patient.full_name }}</h1>
+      <div class="d-flex flex-wrap gap-2 align-items-center text-muted small">
+        <span class="badge badge-soft-primary">{{ patient.patient_id }}</span>
+        <span><i class="bi bi-person"></i> {{ patient.age }} yrs · {{ patient.get_gender_display }}</span>
+        <span><i class="bi bi-telephone"></i> {{ patient.phone }}</span>
+        {% if show_clinical %}<span class="badge badge-soft-danger"><i class="bi bi-droplet"></i> {{ patient.get_blood_group_display }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="page-actions">
+      {% if can.appointments_manage and patient.is_active %}<a href="{% url 'appointments:create' %}?patient={{ patient.pk }}" class="btn btn-primary"><i class="bi bi-calendar-plus"></i> Book appointment</a>{% endif %}
+      {% if can.admissions_manage and patient.is_active %}<a href="{% url 'admissions:create' %}?patient={{ patient.pk }}" class="btn btn-light"><i class="bi bi-hospital"></i> Admit</a>{% endif %}
+      {% if can.records_manage and patient.is_active %}<a href="{% url 'records:create' %}?patient={{ patient.pk }}" class="btn btn-light"><i class="bi bi-journal-plus"></i> New record</a>{% endif %}
+      {% if can.billing_manage %}<a href="{% url 'billing:invoice_create' %}?patient={{ patient.pk }}" class="btn btn-light"><i class="bi bi-receipt"></i> Invoice</a>{% endif %}
+      {% if can.patients_manage %}
+        <a href="{% url 'patients:edit' patient.pk %}" class="btn btn-light"><i class="bi bi-pencil"></i> Edit</a>
+        <form method="post" action="{% url 'patients:toggle_archive' patient.pk %}" class="d-inline"
+              data-confirm="{% if patient.is_active %}Archive this patient? The record stays available for history but is hidden from active lists.{% else %}Restore this patient to the active list?{% endif %}"
+              data-confirm-label="{% if patient.is_active %}Archive{% else %}Restore{% endif %}" data-confirm-class="{% if patient.is_active %}btn-danger{% else %}btn-primary{% endif %}">
+          {% csrf_token %}
+          <button class="btn btn-light {% if patient.is_active %}text-danger{% endif %}" type="submit"><i class="bi bi-{% if patient.is_active %}archive{% else %}arrow-counterclockwise{% endif %}"></i> {% if patient.is_active %}Archive{% else %}Restore{% endif %}</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<ul class="nav nav-tabs-hms mb-3" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-overview" type="button">Overview</button></li>
+  {% if appointments is not None %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-appointments" type="button">Appointments <span class="badge badge-soft-secondary">{{ appointments|length }}</span></button></li>{% endif %}
+  {% if admissions is not None %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-admissions" type="button">Admissions <span class="badge badge-soft-secondary">{{ admissions|length }}</span></button></li>{% endif %}
+  {% if records is not None %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-records" type="button">Medical history <span class="badge badge-soft-secondary">{{ records|length }}</span></button></li>{% endif %}
+  {% if prescriptions is not None %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rx" type="button">Prescriptions <span class="badge badge-soft-secondary">{{ prescriptions|length }}</span></button></li>{% endif %}
+  {% if invoices is not None %}<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-invoices" type="button">Invoices <span class="badge badge-soft-secondary">{{ invoices|length }}</span></button></li>{% endif %}
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="tab-overview">
+    <div class="row g-4">
+      <div class="col-lg-{% if show_clinical %}7{% else %}12{% endif %}">
+        <div class="card-hms h-100">
+          <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-person-vcard"></i> Demographics &amp; contact</h2></div>
+          <div class="card-hms-body">
+            <dl class="detail-list">
+              <div><dt>Date of birth</dt><dd>{{ patient.date_of_birth|date:"d M Y" }}</dd></div>
+              <div><dt>Gender</dt><dd>{{ patient.get_gender_display }}</dd></div>
+              <div><dt>Phone</dt><dd>{{ patient.phone }}</dd></div>
+              <div><dt>Email</dt><dd>{{ patient.email|default:"—" }}</dd></div>
+              <div style="grid-column:1/-1"><dt>Address</dt><dd class="prose">{{ patient.address }}</dd></div>
+              <div><dt>Emergency contact</dt><dd>{{ patient.emergency_contact_name }}{% if patient.emergency_contact_relation %} ({{ patient.emergency_contact_relation }}){% endif %}</dd></div>
+              <div><dt>Emergency phone</dt><dd>{{ patient.emergency_contact_phone }}</dd></div>
+              <div><dt>Registered</dt><dd>{{ patient.created_at|date:"d M Y, H:i" }}{% if patient.registered_by %} by {{ patient.registered_by }}{% endif %}</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+      {% if show_clinical %}
+      <div class="col-lg-5">
+        <div class="card-hms h-100">
+          <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-heart-pulse"></i> Medical summary</h2></div>
+          <div class="card-hms-body">
+            <dl class="detail-list" style="grid-template-columns:1fr;">
+              <div><dt>Blood group</dt><dd>{{ patient.get_blood_group_display }}</dd></div>
+              <div><dt>Allergies</dt><dd class="prose {% if patient.allergies %}text-danger{% endif %}">{{ patient.allergies|default:"None recorded" }}</dd></div>
+              <div><dt>Chronic conditions</dt><dd class="prose">{{ patient.chronic_conditions|default:"None recorded" }}</dd></div>
+              <div><dt>Current medications</dt><dd class="prose">{{ patient.current_medications|default:"None recorded" }}</dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if appointments is not None %}
+  <div class="tab-pane fade" id="tab-appointments">
+    <div class="card-hms">
+      {% if appointments %}
+      <div class="table-responsive"><table class="table table-hms">
+        <thead><tr><th>Reference</th><th>Date &amp; time</th><th>Doctor</th><th>Reason</th><th>Status</th></tr></thead>
+        <tbody>{% for a in appointments %}
+          <tr><td><a class="cell-title" href="{% url 'appointments:detail' a.pk %}">{{ a.reference }}</a></td><td>{{ a.start_at|date:"d M Y, H:i" }}</td><td>{{ a.doctor }}<div class="cell-sub">{{ a.department }}</div></td><td>{{ a.reason|truncatechars:60 }}</td><td>{{ a.status|status_badge:a.get_status_display }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "components/empty_state.html" with icon="calendar2" title="No appointments" message="This patient has no appointment history." %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if admissions is not None %}
+  <div class="tab-pane fade" id="tab-admissions">
+    <div class="card-hms">
+      {% if admissions %}
+      <div class="table-responsive"><table class="table table-hms">
+        <thead><tr><th>Admission</th><th>Admitted</th><th>Discharged</th><th>Bed</th><th>Doctor</th><th>Status</th></tr></thead>
+        <tbody>{% for adm in admissions %}
+          <tr><td><a class="cell-title" href="{% url 'admissions:detail' adm.pk %}">{{ adm.admission_number }}</a></td><td>{{ adm.admitted_at|date:"d M Y, H:i" }}</td><td>{{ adm.discharged_at|date:"d M Y, H:i"|default:"—" }}</td><td>{{ adm.bed.label }}</td><td>{{ adm.attending_doctor }}</td><td>{{ adm.status|status_badge:adm.get_status_display }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "components/empty_state.html" with icon="hospital" title="No admissions" message="This patient has never been admitted." %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if records is not None %}
+  <div class="tab-pane fade" id="tab-records">
+    <div class="card-hms card-hms-body">
+      {% if records %}
+        <ul class="timeline">
+          {% for r in records %}
+            <li>
+              <span class="tl-dot"><i class="bi bi-journal-medical"></i></span>
+              <div class="d-flex justify-content-between flex-wrap gap-2">
+                <a href="{% url 'records:detail' r.pk %}" class="cell-title">{{ r.diagnosis|truncatechars:90 }}</a>
+                <span class="cell-sub">{{ r.visit_date|date:"d M Y, H:i" }} · {{ r.doctor }}</span>
+              </div>
+              <div class="small text-muted mt-1">{{ r.symptoms|truncatechars:160 }}</div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}{% include "components/empty_state.html" with icon="journal-medical" title="No medical records" message="Clinical notes entered by doctors will appear here in chronological order." %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if prescriptions is not None %}
+  <div class="tab-pane fade" id="tab-rx">
+    <div class="card-hms">
+      {% if prescriptions %}
+      <div class="table-responsive"><table class="table table-hms">
+        <thead><tr><th>Prescription</th><th>Issued</th><th>Doctor</th><th>Medications</th><th>Status</th></tr></thead>
+        <tbody>{% for rx in prescriptions %}
+          <tr><td><a class="cell-title" href="{% url 'records:prescription_detail' rx.pk %}">{{ rx.prescription_number }}</a></td><td>{{ rx.created_at|date:"d M Y" }}</td><td>{{ rx.doctor }}</td>
+            <td>{% for item in rx.items.all %}<div class="small">{{ item.medication_name }} · {{ item.dosage }} · {{ item.frequency }}</div>{% endfor %}</td>
+            <td>{{ rx.status|status_badge:rx.get_status_display }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "components/empty_state.html" with icon="prescription2" title="No prescriptions" message="Prescriptions issued by doctors will be listed here." %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if invoices is not None %}
+  <div class="tab-pane fade" id="tab-invoices">
+    <div class="card-hms">
+      {% if invoices %}
+      <div class="table-responsive"><table class="table table-hms">
+        <thead><tr><th>Invoice</th><th>Issued</th><th class="text-end">Total</th><th class="text-end">Balance</th><th>Status</th></tr></thead>
+        <tbody>{% for inv in invoices %}
+          <tr><td><a class="cell-title" href="{% url 'billing:invoice_detail' inv.pk %}">{{ inv.invoice_number }}</a></td><td>{{ inv.issue_date|date:"d M Y" }}</td><td class="text-end">{% money inv.total %}</td><td class="text-end">{% money inv.balance_due %}</td><td>{{ inv.status|status_badge:inv.get_status_display }}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}{% include "components/empty_state.html" with icon="receipt" title="No invoices" message="No invoices have been raised for this patient." %}{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

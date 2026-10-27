@@ -1,0 +1,38 @@
+{% extends "layouts/staff.html" %}
+{% block title %}Stock movements{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'pharmacy:list' %}">Pharmacy</a></li><li class="breadcrumb-item active">Stock movements</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Stock movements</h1><p class="page-subtitle">Complete inventory transaction history</p></div>
+</div>
+<form method="get" class="card-hms filter-bar">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-6"><label class="form-label" for="tx-q">Search</label><input id="tx-q" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Medicine name or reference"></div>
+    <div class="col-sm-6 col-md-3"><label class="form-label" for="tx-type">Type</label>
+      <select id="tx-type" name="type" class="form-select"><option value="">All types</option>{% for value, label in types %}<option value="{{ value }}" {% if request.GET.type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    </div>
+    <div class="col-sm-6 col-md-3 d-flex gap-2"><button class="btn btn-primary flex-fill" type="submit"><i class="bi bi-funnel"></i> Apply</button><a href="{{ request.path }}" class="btn btn-light flex-fill">Reset</a></div>
+  </div>
+</form>
+<div class="card-hms">
+  {% if transactions %}
+  <div class="table-responsive"><table class="table table-hms">
+    <thead><tr><th>When</th><th>Medicine</th><th>Type</th><th class="text-end">Change</th><th class="text-end">Balance</th><th>Reference</th><th>By</th></tr></thead>
+    <tbody>{% for t in transactions %}
+      <tr>
+        <td>{{ t.created_at|date:"d M Y, H:i" }}</td>
+        <td><a href="{% url 'pharmacy:detail' t.medicine.pk %}" class="cell-title">{{ t.medicine.name }}</a><div class="cell-sub">Batch {{ t.medicine.batch_number }}</div></td>
+        <td>{{ t.get_transaction_type_display }}{% if t.note %}<div class="cell-sub">{{ t.note|truncatechars:50 }}</div>{% endif %}</td>
+        <td class="text-end fw-semibold {% if t.quantity_change < 0 %}text-danger{% else %}text-success{% endif %}">{% if t.quantity_change > 0 %}+{% endif %}{{ t.quantity_change }}</td>
+        <td class="text-end">{{ t.balance_after }}</td>
+        <td>{{ t.reference|default:"—" }}</td>
+        <td>{{ t.performed_by|default:"—" }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% include "components/pagination.html" %}
+  {% else %}
+    {% include "components/empty_state.html" with icon="arrow-left-right" title="No stock movements" message="No transactions match these filters." %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}{% if member %}Edit {{ member.full_name }}{% else %}Add staff member{% endif %}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'staff:list' %}">Staff directory</a></li>{% if member %}<li class="breadcrumb-item"><a href="{% url 'staff:detail' member.pk %}">{{ member.full_name }}</a></li><li class="breadcrumb-item active">Edit</li>{% else %}<li class="breadcrumb-item active">Add</li>{% endif %}{% endblock %}
+{% block page_title %}{% if member %}Edit {{ member.full_name }}{% else %}Add a staff member{% endif %}{% endblock %}
+{% block page_subtitle %}Employment details only. Logins and roles are managed in the admin panel.{% endblock %}
+{% block cancel_url %}{% if member %}{% url 'staff:detail' member.pk %}{% else %}{% url 'staff:list' %}{% endif %}{% endblock %}
+{% block submit_label %}Save staff member{% endblock %}

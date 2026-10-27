@@ -1,0 +1,52 @@
+{% load hms_tags %}
+<aside class="app-sidebar" aria-label="Main navigation">
+  <a href="{% url 'dashboard:index' %}" class="sidebar-brand">
+    <span class="brand-logo"><i class="bi bi-hospital"></i></span>
+    <span>
+      <span class="brand-name d-block">{{ hospital.name|truncatechars:26 }}</span>
+      <span class="brand-sub">Staff workspace</span>
+    </span>
+  </a>
+  <nav class="sidebar-nav">
+    <a class="sidebar-link {% nav_active '/dashboard/' exclude='/dashboard/reports/' %}" href="{% url 'dashboard:index' %}"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+
+    {% if can.patients_view or can.appointments_view or can.doctors_view %}<div class="sidebar-section">Front desk</div>{% endif %}
+    {% if can.patients_view %}<a class="sidebar-link {% nav_active '/patients/' %}" href="{% url 'patients:list' %}"><i class="bi bi-people"></i> Patients</a>{% endif %}
+    {% if can.appointments_view %}
+      <a class="sidebar-link {% nav_active '/appointments/' exclude='/appointments/calendar/' %}" href="{% url 'appointments:list' %}"><i class="bi bi-calendar-check"></i> Appointments</a>
+      <a class="sidebar-link {% nav_active '/appointments/calendar/' %}" href="{% url 'appointments:calendar' %}"><i class="bi bi-calendar3"></i> Calendar</a>
+    {% endif %}
+    {% if can.doctors_view %}<a class="sidebar-link {% nav_active '/doctors/' exclude='/doctors/departments/' %}" href="{% url 'doctors:list' %}"><i class="bi bi-person-badge"></i> Doctors</a>{% endif %}
+    {% if can.departments_view %}<a class="sidebar-link {% nav_active '/doctors/departments/' %}" href="{% url 'doctors:department_list' %}"><i class="bi bi-building"></i> Departments</a>{% endif %}
+
+    {% if can.records_view or can.prescriptions_view %}<div class="sidebar-section">Clinical</div>{% endif %}
+    {% if can.records_view %}<a class="sidebar-link {% nav_active '/records/' exclude='/records/prescriptions/' %}" href="{% url 'records:list' %}"><i class="bi bi-journal-medical"></i> Medical records</a>{% endif %}
+    {% if can.prescriptions_view %}<a class="sidebar-link {% nav_active '/records/prescriptions/' %}" href="{% url 'records:prescription_list' %}"><i class="bi bi-prescription2"></i> Prescriptions</a>{% endif %}
+
+    {% if can.admissions_view or can.beds_view or can.nursing_view %}<div class="sidebar-section">Inpatients</div>{% endif %}
+    {% if can.admissions_view %}<a class="sidebar-link {% nav_active '/admissions/' exclude='/admissions/beds/,/admissions/rooms/,/admissions/tasks/' %}" href="{% url 'admissions:list' %}"><i class="bi bi-hospital"></i> Admissions</a>{% endif %}
+    {% if can.beds_view %}<a class="sidebar-link {% nav_active '/admissions/beds/' %}" href="{% url 'admissions:bed_board' %}"><i class="bi bi-grid-3x3-gap"></i> Bed board</a>{% endif %}
+    {% if can.beds_manage %}<a class="sidebar-link {% nav_active '/admissions/rooms/' %}" href="{% url 'admissions:room_list' %}"><i class="bi bi-door-closed"></i> Rooms &amp; beds</a>{% endif %}
+    {% if can.nursing_view %}<a class="sidebar-link {% nav_active '/admissions/tasks/' %}" href="{% url 'admissions:tasks' %}"><i class="bi bi-clipboard2-pulse"></i> Nursing tasks</a>{% endif %}
+
+    {% if can.pharmacy_view or can.billing_view %}<div class="sidebar-section">Operations</div>{% endif %}
+    {% if can.pharmacy_view %}
+      <a class="sidebar-link {% nav_active '/pharmacy/' exclude='/pharmacy/transactions/' %}" href="{% url 'pharmacy:list' %}"><i class="bi bi-capsule"></i> Pharmacy</a>
+      <a class="sidebar-link {% nav_active '/pharmacy/transactions/' %}" href="{% url 'pharmacy:transactions' %}"><i class="bi bi-arrow-left-right"></i> Stock movements</a>
+    {% endif %}
+    {% if can.billing_view %}
+      <a class="sidebar-link {% nav_active '/billing/invoices/' %}" href="{% url 'billing:invoice_list' %}"><i class="bi bi-receipt"></i> Invoices</a>
+      <a class="sidebar-link {% nav_active '/billing/payments/' %}" href="{% url 'billing:payment_list' %}"><i class="bi bi-cash-coin"></i> Payments</a>
+    {% endif %}
+
+    <div class="sidebar-section">Organisation</div>
+    {% if can.staff_view %}<a class="sidebar-link {% nav_active '/staff/' %}" href="{% url 'staff:list' %}"><i class="bi bi-person-vcard"></i> Staff directory</a>{% endif %}
+    {% if can.reports_operational or can.reports_clinical or can.reports_pharmacy or can.reports_financial %}
+      <a class="sidebar-link {% nav_active '/dashboard/reports/' %}" href="{% url 'dashboard:reports' %}"><i class="bi bi-graph-up"></i> Reports</a>
+    {% endif %}
+    {% if can.adminpanel_access %}
+      <a class="sidebar-link" href="{% url 'adminpanel:overview' %}"><i class="bi bi-shield-lock"></i> Admin panel</a>
+    {% endif %}
+  </nav>
+  <div class="sidebar-footer"><i class="bi bi-clock"></i> Times shown in {{ local_tz }}</div>
+</aside>

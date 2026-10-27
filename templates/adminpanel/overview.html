@@ -1,0 +1,117 @@
+{% extends "layouts/admin.html" %}
+{% load static hms_tags %}
+{% block title %}Admin control center{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Control center</li>{% endblock %}
+{% block content %}
+<div class="hero-panel d-flex flex-wrap justify-content-between align-items-center gap-3">
+  <div>
+    <div class="small-caps mb-1" style="color:#93C5FD">Administration</div>
+    <h1 class="page-title">Hospital control center</h1>
+    <p class="page-subtitle mb-0">System-wide view of {{ hospital.name }} · {% now "l, d F Y" %}</p>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{% url 'adminpanel:user_create' %}" class="btn btn-primary"><i class="bi bi-person-plus"></i> New user</a>
+    <a href="{% url 'dashboard:reports' %}" class="btn btn-light"><i class="bi bi-graph-up"></i> Reports</a>
+    <a href="{% url 'adminpanel:settings' %}" class="btn btn-light"><i class="bi bi-sliders"></i> Settings</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  {% for card in cards %}
+    <div class="col-sm-6 col-xl-3">
+      <div class="stat-card {% cycle 'accent-blue' 'accent-violet' 'accent-emerald' 'accent-amber' 'accent-rose' 'accent-violet' 'accent-emerald' 'accent-blue' %}">
+        <span class="stat-icon"><i class="bi bi-{{ card.icon }}"></i></span>
+        <span class="min-w-0">
+          <span class="stat-value d-block">{% if card.money %}{% money card.value %}{% else %}{{ card.value }}{% endif %}</span>
+          <span class="stat-label d-block">{{ card.label }}</span>
+          {% if card.hint %}<span class="stat-hint d-block">{{ card.hint }}</span>{% endif %}
+        </span>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-graph-up-arrow"></i> Revenue — last 12 months</h2><span class="small text-muted">Outstanding balance: <strong class="text-danger">{% money outstanding %}</strong></span></div>
+      <div class="card-hms-body">
+        {% if revenue_chart.has_data %}
+          <div class="chart-box"><canvas id="adminRevenue" role="img" aria-label="Revenue chart"></canvas></div>
+          {{ revenue_chart|json_script:"admin-revenue-data" }}
+        {% else %}
+          {% include "components/empty_state.html" with icon="cash-stack" title="No revenue yet" message="Revenue appears once payments are recorded." %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-bar-chart"></i> Appointments — last 14 days</h2></div>
+      <div class="card-hms-body"><div class="chart-box chart-sm"><canvas id="adminDaily" role="img" aria-label="Daily appointments chart"></canvas></div>{{ daily_chart|json_script:"admin-daily-data" }}</div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-activity"></i> Recent activity</h2><a href="{% url 'adminpanel:audit_log' %}" class="btn btn-sm btn-light">Full audit log</a></div>
+      <div class="card-hms-body py-2">
+        {% for entry in recent_activity %}
+          <div class="activity-item d-flex gap-3 align-items-start">
+            <span class="avatar avatar-sm">{% if entry.user %}{{ entry.user|initials }}{% else %}<i class="bi bi-robot"></i>{% endif %}</span>
+            <div class="min-w-0 flex-fill">
+              <div class="small"><strong>{{ entry.user|default:"Anonymous" }}</strong> · {{ entry.get_action_display|lower }} <span class="text-muted">{{ entry.object_repr|truncatechars:60 }}</span></div>
+              <div class="cell-sub">{{ entry.message|truncatechars:90 }} · {{ entry.created_at|timesince }} ago</div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted small my-2">No activity recorded yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-shield-check"></i> System health</h2></div>
+      <div class="card-hms-body">
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">User accounts</span><strong>{{ user_total }}</strong></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Active staff profiles</span><strong>{{ staff_total }}</strong></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">Low-stock medicines</span><strong class="{% if low_stock %}text-warning{% endif %}">{{ low_stock }}</strong></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">Failed sign-ins (24h)</span><strong class="{% if failed_logins %}text-danger{% endif %}">{{ failed_logins }}</strong></div>
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-pie-chart"></i> Appointment status (30 days)</h2></div>
+      <div class="card-hms-body">
+        {% if appointment_chart.total %}<div class="chart-box chart-sm"><canvas id="adminStatus" role="img" aria-label="Appointment status chart"></canvas></div>{{ appointment_chart|json_script:"admin-status-data" }}
+        {% else %}<p class="text-muted small mb-0">No appointments in the last 30 days.</p>{% endif %}
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-door-open"></i> Bed occupancy</h2><span class="small text-muted">{{ occupancy.occupancy_rate }}%</span></div>
+      <div class="card-hms-body">
+        {% if occupancy.total %}<div class="chart-box chart-sm"><canvas id="adminBeds" role="img" aria-label="Bed occupancy chart"></canvas></div>{{ occupancy.chart|json_script:"admin-bed-data" }}
+        {% else %}<p class="text-muted small mb-0">No beds configured yet.</p>{% endif %}
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-people"></i> Active users by role</h2></div>
+      <div class="card-hms-body"><div class="chart-box chart-sm"><canvas id="adminRoles" role="img" aria-label="Users by role chart"></canvas></div>{{ role_chart|json_script:"admin-role-data" }}</div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-person-plus"></i> Newest patients</h2></div>
+      <div class="card-hms-body">
+        {% for p in recent_patients %}
+          <div class="d-flex justify-content-between small {% if not forloop.last %}mb-2{% endif %}"><a href="{% url 'patients:detail' p.pk %}">{{ p.full_name }}</a><span class="text-muted">{{ p.created_at|date:"d M" }}</span></div>
+        {% empty %}<p class="text-muted small mb-0">No patients registered yet.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+<script>
+  HMSCharts.line("adminRevenue", "admin-revenue-data", { money: true, currency: "{{ hospital.currency_symbol|escapejs }}" });
+  HMSCharts.bar("adminDaily", "admin-daily-data", { label: "Appointments" });
+  HMSCharts.doughnut("adminStatus", "admin-status-data");
+  HMSCharts.doughnut("adminBeds", "admin-bed-data");
+  HMSCharts.bar("adminRoles", "admin-role-data", { multicolor: true });
+</script>
+{% endblock %}

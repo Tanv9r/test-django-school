@@ -1,0 +1,25 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}Admit patient{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:list' %}">Admissions</a></li><li class="breadcrumb-item active">Admit</li>{% endblock %}
+{% block page_title %}Admit a patient{% endblock %}
+{% block page_subtitle %}The selected bed is locked and marked occupied in the same transaction, so it can't be double-assigned.{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.patient %}
+      {% include "components/field.html" with field=form.bed %}
+      {% include "components/field.html" with field=form.attending_doctor %}
+      {% include "components/field.html" with field=form.assigned_nurse %}
+      {% include "components/field.html" with field=form.admitted_at %}
+      {% include "components/field.html" with field=form.reason %}
+    </div>
+    {% if not form.fields.bed.queryset.exists %}
+      <div class="alert alert-warning mt-3 mb-0"><i class="bi bi-exclamation-triangle mt-1"></i><div>There are no available beds right now. Discharge a patient or release a bed from maintenance first.</div></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block cancel_url %}{% url 'admissions:list' %}{% endblock %}
+{% block submit_label %}Admit patient{% endblock %}

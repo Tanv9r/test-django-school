@@ -1,0 +1,35 @@
+{% extends "layouts/staff.html" %}
+{% block title %}Medical records{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item active">Medical records</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">Medical records</h1><p class="page-subtitle">Confidential clinical notes · visible to authorised clinical staff only</p></div>
+  {% if can.records_manage %}<div class="page-actions"><a href="{% url 'records:create' %}" class="btn btn-primary"><i class="bi bi-journal-plus"></i> New record</a></div>{% endif %}
+</div>
+{% include "components/filter_bar.html" %}
+<div class="card-hms">
+  {% if records %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr><th>Visit</th><th>Patient</th><th>Doctor</th><th>Diagnosis</th><th>Follow-up</th><th></th></tr></thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td><a href="{% url 'records:detail' r.pk %}" class="cell-title">{{ r.visit_date|date:"d M Y" }}</a><div class="cell-sub">{{ r.visit_date|time:"H:i" }}</div></td>
+            <td>{{ r.patient.full_name }}<div class="cell-sub">{{ r.patient.patient_id }}</div></td>
+            <td>{{ r.doctor }}</td>
+            <td class="text-truncate" style="max-width:280px;">{{ r.diagnosis }}</td>
+            <td>{{ r.follow_up_date|date:"d M Y"|default:"—" }}</td>
+            <td class="text-end"><a href="{% url 'records:detail' r.pk %}" class="btn btn-sm btn-light"><i class="bi bi-eye"></i></a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    {% if can.records_manage %}{% url 'records:create' as create_url %}{% endif %}
+    {% include "components/empty_state.html" with icon="journal-medical" title="No medical records" message="Records for your patients will appear here once entered by a doctor." action_url=create_url action_label="New record" %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load hms_tags %}
+{% block title %}{{ invoice.invoice_number }}{% endblock %}
+{% block extra_css %}<style>body{background:#F4F7FB}.sheet{max-width:860px;margin:2rem auto;padding:2.75rem;background:#fff;border:1px solid #E2E8F0;border-radius:16px;box-shadow:0 8px 30px rgba(15,23,42,.06)}.stamp{display:inline-block;padding:.3rem .9rem;border:2px solid currentColor;border-radius:8px;font-weight:800;letter-spacing:.1em;transform:rotate(-4deg)}@media print{body{background:#fff}.sheet{border:0;box-shadow:none;margin:0;padding:0;max-width:none}}</style>{% endblock %}
+{% block body %}
+<div class="sheet">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div class="d-flex gap-3 align-items-center">
+      <span style="width:54px;height:54px;border-radius:14px;background:#2563EB;color:#fff;display:grid;place-items:center;font-size:1.5rem"><i class="bi bi-hospital"></i></span>
+      <div>
+        <h1 class="h4 fw-bold mb-0">{{ hospital.name }}</h1>
+        <div class="small text-muted">{{ hospital.address|linebreaksbr }}</div>
+        <div class="small text-muted">{{ hospital.phone }}{% if hospital.email %} · {{ hospital.email }}{% endif %}</div>
+      </div>
+    </div>
+    <div class="text-end">
+      <div class="h3 fw-bold text-primary mb-0">INVOICE</div>
+      <div class="fw-semibold">{{ invoice.invoice_number }}</div>
+      <div class="small text-muted">Issued {{ invoice.issue_date|date:"d M Y" }}{% if invoice.due_date %} · Due {{ invoice.due_date|date:"d M Y" }}{% endif %}</div>
+    </div>
+  </div>
+  <div class="row mb-4">
+    <div class="col-sm-6">
+      <div class="small-caps mb-1">Billed to</div>
+      <div class="fw-semibold">{{ invoice.patient.full_name }}</div>
+      <div class="small">{{ invoice.patient.patient_id }}</div>
+      <div class="small text-muted">{{ invoice.patient.address|linebreaksbr }}</div>
+      <div class="small text-muted">{{ invoice.patient.phone }}</div>
+    </div>
+    <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
+      <span class="stamp {% if invoice.status == 'paid' %}text-success{% elif invoice.status == 'cancelled' %}text-secondary{% elif invoice.status == 'partially_paid' %}text-warning{% else %}text-danger{% endif %}">{{ invoice.get_status_display|upper }}</span>
+    </div>
+  </div>
+  <table class="table">
+    <thead class="table-light"><tr><th>#</th><th>Description</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Amount</th></tr></thead>
+    <tbody>{% for item in items %}<tr><td>{{ forloop.counter }}</td><td>{{ item.description }}<div class="small text-muted">{{ item.get_item_type_display }}</div></td><td class="text-end">{{ item.quantity|floatformat:"-2" }}</td><td class="text-end">{% money item.unit_price %}</td><td class="text-end">{% money item.line_total %}</td></tr>{% endfor %}</tbody>
+  </table>
+  <div class="row justify-content-end">
+    <div class="col-sm-6 col-md-5">
+      <div class="d-flex justify-content-between"><span class="text-muted">Subtotal</span><span>{% money invoice.subtotal %}</span></div>
+      <div class="d-flex justify-content-between"><span class="text-muted">Discount</span><span>−{% money invoice.discount_amount %}</span></div>
+      <div class="d-flex justify-content-between fw-bold fs-5 border-top mt-2 pt-2"><span>Total</span><span>{% money invoice.total %}</span></div>
+      <div class="d-flex justify-content-between"><span class="text-muted">Paid</span><span>{% money invoice.amount_paid %}</span></div>
+      <div class="d-flex justify-content-between fw-bold"><span>Balance due</span><span>{% money invoice.balance_due %}</span></div>
+    </div>
+  </div>
+  {% if payments %}
+    <div class="small-caps mt-4 mb-2">Payments received</div>
+    <table class="table table-sm small">
+      <tbody>{% for p in payments %}<tr><td>{{ p.payment_number }}</td><td>{{ p.paid_at|date:"d M Y" }}</td><td>{{ p.method }}</td><td>{{ p.reference }}</td><td class="text-end">{% money p.amount %}</td></tr>{% endfor %}</tbody>
+    </table>
+  {% endif %}
+  {% if invoice.notes %}<p class="small mt-3"><strong>Notes:</strong> {{ invoice.notes }}</p>{% endif %}
+  <hr class="mt-4">
+  <div class="d-flex justify-content-between small text-muted flex-wrap gap-2">
+    <span>{{ hospital.invoice_footer }}</span>
+    <span>Printed {{ printed_at|date:"d M Y H:i" }} ({{ local_tz }})</span>
+  </div>
+  <div class="text-center mt-4 no-print"><button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print invoice</button></div>
+</div>
+{% endblock %}

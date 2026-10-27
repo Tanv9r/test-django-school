@@ -1,0 +1,8 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}{% if bed %}Edit bed {{ bed }}{% else %}Add bed{% endif %}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'admissions:room_list' %}">Rooms &amp; beds</a></li><li class="breadcrumb-item"><a href="{% url 'admissions:room_detail' room.pk %}">Room {{ room.number }}</a></li><li class="breadcrumb-item active">{% if bed %}Bed {{ bed.bed_number }}{% else %}Add bed{% endif %}</li>{% endblock %}
+{% block page_title %}{% if bed %}Edit bed {{ bed.bed_number }}{% else %}Add a bed{% endif %} · Room {{ room.number }}{% endblock %}
+{% block page_subtitle %}Beds become occupied only through admissions; use maintenance to take a bed out of service.{% endblock %}
+{% block form_col %}col-lg-6{% endblock %}
+{% block cancel_url %}{% url 'admissions:room_detail' room.pk %}{% endblock %}
+{% block submit_label %}Save bed{% endblock %}

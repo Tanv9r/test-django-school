@@ -1,0 +1,64 @@
+{% extends "layouts/staff.html" %}
+{% load static %}
+{% block title %}{{ report.title }} report{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'dashboard:reports' %}">Reports</a></li><li class="breadcrumb-item active">{{ report.title }}</li>{% endblock %}
+{% block content %}
+<div class="print-only mb-3">
+  <h2 class="h4 mb-0">{{ hospital.name }}</h2>
+  <div class="small">{{ report.title }} · {{ date_from|date:"d M Y" }} – {{ date_to|date:"d M Y" }} · generated {{ generated_at|date:"d M Y H:i" }} ({{ local_tz }})</div>
+</div>
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><i class="bi bi-{{ report.icon }} text-primary"></i> {{ report.title }}</h1>
+    <p class="page-subtitle">{{ report.description }}{% if data.snapshot %} Figures reflect the current state.{% else %} Period: {{ date_from|date:"d M Y" }} – {{ date_to|date:"d M Y" }}.{% endif %}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ csv_url }}" class="btn btn-light"><i class="bi bi-filetype-csv"></i> Export CSV</a>
+    <button type="button" class="btn btn-light" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+  </div>
+</div>
+
+<form method="get" class="card-hms filter-bar">
+  <div class="row g-2 align-items-end">
+    <div class="col-sm-5 col-lg-3"><label class="form-label" for="id_date_from">From</label>{{ form.date_from }}</div>
+    <div class="col-sm-5 col-lg-3"><label class="form-label" for="id_date_to">To</label>{{ form.date_to }}</div>
+    <div class="col-sm-2 col-lg-auto"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Apply</button></div>
+  </div>
+  {% if form.non_field_errors %}<div class="text-danger small mt-2">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+</form>
+
+<div class="row g-3 mb-4">
+  {% for label, value in data.summary %}
+    <div class="col-6 col-md-4 col-xl"><div class="stat-card"><span><span class="stat-value d-block">{{ value }}</span><span class="stat-label">{{ label }}</span></span></div></div>
+  {% endfor %}
+</div>
+
+{% if data.chart and data.chart.values %}
+<div class="card-hms no-print">
+  <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-bar-chart"></i> {{ data.chart.label }}</h2></div>
+  <div class="card-hms-body"><div class="chart-box"><canvas id="reportChart" role="img" aria-label="{{ data.chart.label }}"></canvas></div></div>
+  {{ data.chart|json_script:"report-chart-data" }}
+</div>
+{% endif %}
+
+<div class="card-hms">
+  <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-table"></i> Details</h2><span class="badge badge-soft-primary">{{ data.rows|length }} rows</span></div>
+  {% if data.rows %}
+    <div class="table-responsive">
+      <table class="table table-hms">
+        <thead><tr>{% for col in data.columns %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for row in data.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  {% else %}
+    {% include "components/empty_state.html" with icon="clipboard-data" title="No data for this period" message="Try widening the date range." %}
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+{% if data.chart and data.chart.values %}
+<script src="{% static 'vendor/chartjs/chart.umd.min.js' %}"></script>
+<script src="{% static 'js/charts.js' %}"></script>
+<script>HMSCharts.{% if data.chart.type == 'line' %}line{% else %}bar{% endif %}("reportChart", "report-chart-data", { label: "{{ data.chart.label|escapejs }}" });</script>
+{% endif %}
+{% endblock %}

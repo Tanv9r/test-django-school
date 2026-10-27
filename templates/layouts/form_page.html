@@ -1,0 +1,24 @@
+{% extends base_layout|default:"layouts/staff.html" %}
+{# Generic single-form page. Children override page_title, cancel_url and optionally form_body. #}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+    <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="{% block form_col %}col-xl-9{% endblock %}">
+    <form method="post" data-loading {% block form_attrs %}{% endblock %}>
+      {% csrf_token %}
+      {% block form_body %}
+        <div class="card-hms"><div class="card-hms-body">{% include "components/form_fields.html" %}</div></div>
+      {% endblock %}
+      <div class="form-actions">
+        <a href="{% block cancel_url %}{% url 'dashboard:index' %}{% endblock %}" class="btn btn-light">Cancel</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> {% block submit_label %}Save{% endblock %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

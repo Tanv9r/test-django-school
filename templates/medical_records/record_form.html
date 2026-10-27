@@ -1,0 +1,43 @@
+{% extends "layouts/form_page.html" %}
+{% block title %}{% if record %}Amend record{% else %}New medical record{% endif %}{% endblock %}
+{% block breadcrumbs %}
+  <li class="breadcrumb-item"><a href="{% url 'records:list' %}">Medical records</a></li>
+  {% if record %}<li class="breadcrumb-item"><a href="{% url 'records:detail' record.pk %}">Record #{{ record.pk }}</a></li><li class="breadcrumb-item active">Amend</li>{% else %}<li class="breadcrumb-item active">New</li>{% endif %}
+{% endblock %}
+{% block page_title %}{% if record %}Amend medical record{% else %}New medical record{% endif %}{% endblock %}
+{% block page_subtitle %}Entered and reviewed by the treating doctor. {% if record %}Amendments are tracked in the record's change history.{% endif %}{% endblock %}
+{% block form_body %}
+{% include "components/form_errors.html" %}
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-person"></i> Encounter</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.patient %}
+      {% include "components/field.html" with field=form.appointment %}
+      {% include "components/field.html" with field=form.visit_date %}
+    </div>
+  </div>
+</div>
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-clipboard2-pulse"></i> Clinical notes</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.symptoms %}
+      {% include "components/field.html" with field=form.visit_notes %}
+      {% include "components/field.html" with field=form.diagnosis %}
+      {% include "components/field.html" with field=form.treatment_plan %}
+    </div>
+  </div>
+</div>
+<div class="card-hms">
+  <div class="card-hms-body">
+    <div class="form-section-title"><i class="bi bi-calendar-plus"></i> Follow-up</div>
+    <div class="row g-3">
+      {% include "components/field.html" with field=form.follow_up_instructions col="col-md-8" %}
+      {% include "components/field.html" with field=form.follow_up_date col="col-md-4" %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block cancel_url %}{% if record %}{% url 'records:detail' record.pk %}{% else %}{% url 'records:list' %}{% endif %}{% endblock %}
+{% block submit_label %}Save record{% endblock %}

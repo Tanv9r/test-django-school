@@ -1,0 +1,59 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ member.full_name }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'staff:list' %}">Staff directory</a></li><li class="breadcrumb-item active">{{ member.full_name }}</li>{% endblock %}
+{% block content %}
+<div class="card-hms mb-4">
+  <div class="card-hms-body d-flex flex-wrap gap-4 align-items-center">
+    <span class="avatar avatar-lg">{{ member.full_name|initials }}</span>
+    <div class="flex-fill">
+      <h1 class="page-title mb-1">{{ member.full_name }}</h1>
+      <div class="text-muted">{{ member.job_title }}{% if member.department %} · {{ member.department }}{% endif %}</div>
+      <div class="mt-2 d-flex gap-2 flex-wrap"><span class="badge badge-soft-secondary">{{ member.employee_id }}</span>{{ member.employment_status|status_badge:member.get_employment_status_display }}</div>
+    </div>
+    {% if can.staff_manage %}
+    <div class="page-actions">
+      <a href="{% url 'staff:edit' member.pk %}" class="btn btn-light"><i class="bi bi-pencil"></i> Edit profile</a>
+      {% if member.user %}<a href="{% url 'adminpanel:user_edit' member.user.pk %}" class="btn btn-primary"><i class="bi bi-key"></i> Manage access</a>
+      {% else %}<a href="{% url 'adminpanel:user_create' %}?staff={{ member.pk }}" class="btn btn-primary"><i class="bi bi-key"></i> Create login</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-person-lines-fill"></i> Employment &amp; contact</h2></div>
+      <div class="card-hms-body">
+        <dl class="detail-list">
+          <div><dt>Phone</dt><dd>{{ member.phone }}</dd></div>
+          <div><dt>Email</dt><dd>{{ member.email|default:"—" }}</dd></div>
+          <div><dt>Department</dt><dd>{{ member.department|default:"—" }}</dd></div>
+          <div><dt>Joined</dt><dd>{{ member.joining_date|date:"d M Y" }}</dd></div>
+          {% if show_private %}
+            <div style="grid-column:1/-1"><dt>Address</dt><dd class="prose">{{ member.address|default:"—" }}</dd></div>
+            {% if member.notes %}<div style="grid-column:1/-1"><dt>HR notes</dt><dd class="prose">{{ member.notes }}</dd></div>{% endif %}
+          {% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-shield-lock"></i> System access</h2></div>
+      <div class="card-hms-body">
+        {% if member.user %}
+          <dl class="detail-list" style="grid-template-columns:1fr 1fr;">
+            <div><dt>Username</dt><dd>{{ member.user.username }}</dd></div>
+            <div><dt>Role</dt><dd>{{ member.user.get_role_display }}</dd></div>
+            <div><dt>Account</dt><dd>{{ member.user.is_active|active_badge }}</dd></div>
+            <div><dt>Last sign-in</dt><dd>{{ member.user.last_login|date:"d M Y H:i"|default:"Never" }}</dd></div>
+          </dl>
+        {% else %}
+          <p class="text-muted mb-0 small">This staff member has no login account. Credentials are managed separately from the employment profile.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

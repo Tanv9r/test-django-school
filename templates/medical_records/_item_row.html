@@ -1,0 +1,17 @@
+<div class="formset-row {% if f.DELETE.value %}is-deleted{% endif %}">
+  {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
+  {% for e in f.non_field_errors %}<div class="text-danger small mb-2">{{ e }}</div>{% endfor %}
+  <div class="row g-2">
+    <div class="col-md-5"><label class="form-label">{{ f.medicine.label }}</label>{{ f.medicine }}{% for e in f.medicine.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-md-5"><label class="form-label">Medication name</label>{{ f.medication_name }}{% for e in f.medication_name.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-md-2 d-flex align-items-end justify-content-end">
+      <span class="d-none">{{ f.DELETE }}</span>
+      <button type="button" class="btn btn-light btn-icon text-danger" data-formset-remove title="Remove / restore"><i class="bi bi-trash"></i></button>
+    </div>
+    <div class="col-6 col-md-3"><label class="form-label">Dosage</label>{{ f.dosage }}{% for e in f.dosage.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-6 col-md-3"><label class="form-label">Frequency</label>{{ f.frequency }}{% for e in f.frequency.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-6 col-md-3"><label class="form-label">Duration</label>{{ f.duration }}{% for e in f.duration.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-6 col-md-3"><label class="form-label">Dispense qty</label>{{ f.quantity }}{% for e in f.quantity.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}</div>
+    <div class="col-12"><label class="form-label">Instructions</label>{{ f.instructions }}</div>
+  </div>
+</div>

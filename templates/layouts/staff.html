@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% block theme_css %}<link rel="stylesheet" href="{% static 'css/staff.css' %}">{% endblock %}
+{% block body_class %}theme-staff{% endblock %}
+{% block body %}
+<div class="app-shell">
+  {% include "components/sidebar_staff.html" %}
+  <div class="sidebar-backdrop" data-sidebar-close></div>
+  <div class="app-main">
+    {% include "components/topbar.html" %}
+    <main class="app-content" id="main-content">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}"><i class="bi bi-house-door"></i> Dashboard</a></li>
+          {% block breadcrumbs %}{% endblock %}
+        </ol>
+      </nav>
+      {% include "components/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+    {% include "components/footer.html" %}
+  </div>
+</div>
+{% include "components/confirm_modal.html" %}
+{% endblock %}

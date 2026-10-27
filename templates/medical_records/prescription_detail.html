@@ -1,0 +1,66 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}{{ rx.prescription_number }}{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'records:prescription_list' %}">Prescriptions</a></li><li class="breadcrumb-item active">{{ rx.prescription_number }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Prescription {{ rx.prescription_number }} {{ rx.status|status_badge:rx.get_status_display }}</h1>
+    <p class="page-subtitle">{{ rx.patient.full_name }} ({{ rx.patient.patient_id }}) · issued {{ rx.created_at|date:"d M Y, H:i" }} by {{ rx.doctor }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'records:prescription_print' rx.pk %}" target="_blank" rel="noopener" class="btn btn-light"><i class="bi bi-printer"></i> Print</a>
+    {% if can_cancel %}
+      <form method="post" action="{% url 'records:prescription_cancel' rx.pk %}" data-confirm="Cancel this prescription? The pharmacy will no longer be able to dispense it." data-confirm-label="Cancel prescription">
+        {% csrf_token %}<button class="btn btn-light text-danger" type="submit"><i class="bi bi-x-circle"></i> Cancel</button>
+      </form>
+    {% endif %}
+    {% if can_dispense %}
+      <form method="post" action="{% url 'records:prescription_dispense' rx.pk %}" data-confirm="Dispense all items? Linked stock will be deducted from inventory." data-confirm-label="Dispense" data-confirm-class="btn-success">
+        {% csrf_token %}<button class="btn btn-success" type="submit"><i class="bi bi-bag-check"></i> Dispense</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-capsule"></i> Medications</h2></div>
+      <div class="table-responsive">
+        <table class="table table-hms">
+          <thead><tr><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Duration</th><th>Qty</th><th>Stock</th></tr></thead>
+          <tbody>
+            {% for item in rx.items.all %}
+            <tr>
+              <td><span class="cell-title">{{ item.medication_name }}</span>{% if item.instructions %}<div class="cell-sub">{{ item.instructions }}</div>{% endif %}</td>
+              <td>{{ item.dosage }}</td><td>{{ item.frequency }}</td><td>{{ item.duration }}</td>
+              <td>{{ item.quantity|default:"—" }}</td>
+              <td>
+                {% if item.medicine %}
+                  {% if item.medicine.quantity >= item.quantity %}<span class="badge badge-soft-success">{{ item.medicine.quantity }} in stock</span>{% else %}<span class="badge badge-soft-danger">Only {{ item.medicine.quantity }}</span>{% endif %}
+                  <div class="cell-sub">Batch {{ item.medicine.batch_number }}</div>
+                {% else %}<span class="cell-sub">Not linked</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if rx.notes %}<div class="card-hms"><div class="card-hms-body"><div class="small-caps mb-1">Doctor's notes</div><div class="prose">{{ rx.notes }}</div></div></div>{% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card-hms">
+      <div class="card-hms-body">
+        <dl class="detail-list" style="grid-template-columns:1fr;">
+          <div><dt>Patient</dt><dd>{{ rx.patient.full_name }}<div class="cell-sub">{{ rx.patient.patient_id }} · {{ rx.patient.age }} yrs</div></dd></div>
+          {% if can.patients_view_clinical %}<div><dt>Allergies</dt><dd class="{% if rx.patient.allergies %}text-danger{% endif %}">{{ rx.patient.allergies|default:"None recorded" }}</dd></div>{% endif %}
+          <div><dt>Prescriber</dt><dd>{{ rx.doctor }}</dd></div>
+          {% if rx.medical_record and can.records_view %}<div><dt>Medical record</dt><dd><a href="{% url 'records:detail' rx.medical_record.pk %}">Record #{{ rx.medical_record.pk }}</a></dd></div>{% endif %}
+          {% if rx.dispensed_at %}<div><dt>Dispensed</dt><dd>{{ rx.dispensed_at|date:"d M Y, H:i" }} by {{ rx.dispensed_by }}</dd></div>{% endif %}
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "layouts/staff.html" %}
+{% load hms_tags %}
+{% block title %}Medical record{% endblock %}
+{% block breadcrumbs %}<li class="breadcrumb-item"><a href="{% url 'records:list' %}">Medical records</a></li><li class="breadcrumb-item active">Record #{{ record.pk }}</li>{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Medical record #{{ record.pk }}</h1>
+    <p class="page-subtitle">{{ record.patient.full_name }} ({{ record.patient.patient_id }}) · {{ record.visit_date|date:"d M Y, H:i" }} · {{ record.doctor }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'patients:detail' record.patient.pk %}" class="btn btn-light"><i class="bi bi-person"></i> Patient profile</a>
+    {% if can_edit %}
+      <a href="{% url 'records:prescription_create' %}?record={{ record.pk }}" class="btn btn-light"><i class="bi bi-prescription2"></i> Write prescription</a>
+      <a href="{% url 'records:edit' record.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Amend</a>
+    {% endif %}
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-clipboard2-pulse"></i> Clinical notes</h2>{% if record.appointment %}<a href="{% url 'appointments:detail' record.appointment.pk %}" class="badge badge-soft-primary">{{ record.appointment.reference }}</a>{% endif %}</div>
+      <div class="card-hms-body">
+        <dl class="detail-list" style="grid-template-columns:1fr;">
+          <div><dt>Symptoms</dt><dd class="prose">{{ record.symptoms }}</dd></div>
+          {% if record.visit_notes %}<div><dt>Visit notes</dt><dd class="prose">{{ record.visit_notes }}</dd></div>{% endif %}
+          <div><dt>Diagnosis</dt><dd class="prose fw-semibold">{{ record.diagnosis }}</dd></div>
+          <div><dt>Treatment plan</dt><dd class="prose">{{ record.treatment_plan|default:"—" }}</dd></div>
+          <div><dt>Follow-up instructions</dt><dd class="prose">{{ record.follow_up_instructions|default:"—" }}{% if record.follow_up_date %}<div class="mt-1"><span class="badge badge-soft-info"><i class="bi bi-calendar"></i> Follow up on {{ record.follow_up_date|date:"d M Y" }}</span></div>{% endif %}</dd></div>
+        </dl>
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-prescription2"></i> Prescriptions from this visit</h2></div>
+      {% if prescriptions %}
+        <div class="table-responsive"><table class="table table-hms">
+          <thead><tr><th>Prescription</th><th>Medications</th><th>Status</th></tr></thead>
+          <tbody>{% for rx in prescriptions %}
+            <tr><td><a href="{% url 'records:prescription_detail' rx.pk %}" class="cell-title">{{ rx.prescription_number }}</a></td>
+              <td>{% for item in rx.items.all %}<div class="small">{{ item.medication_name }} · {{ item.dosage }} · {{ item.frequency }} · {{ item.duration }}</div>{% endfor %}</td>
+              <td>{{ rx.status|status_badge:rx.get_status_display }}</td></tr>
+          {% endfor %}</tbody>
+        </table></div>
+      {% else %}
+        <div class="card-hms-body text-muted small">No prescriptions linked to this record.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-info-circle"></i> Record info</h2></div>
+      <div class="card-hms-body">
+        <dl class="detail-list" style="grid-template-columns:1fr;">
+          <div><dt>Created</dt><dd>{{ record.created_at|date:"d M Y, H:i" }}{% if record.created_by %} by {{ record.created_by }}{% endif %}</dd></div>
+          <div><dt>Last updated</dt><dd>{{ record.updated_at|date:"d M Y, H:i" }}{% if record.updated_by %} by {{ record.updated_by }}{% endif %}</dd></div>
+        </dl>
+      </div>
+    </div>
+    <div class="card-hms">
+      <div class="card-hms-header"><h2 class="card-hms-title"><i class="bi bi-clock-history"></i> Change history</h2></div>
+      <div class="card-hms-body">
+        {% if history %}
+          <ul class="timeline">
+            {% for h in history %}
+              <li><span class="tl-dot"><i class="bi bi-pencil"></i></span>
+                <div class="small fw-semibold">{{ h.get_action_display }} by {{ h.user|default:"system" }}</div>
+                <div class="cell-sub">{{ h.created_at|date:"d M Y, H:i" }}</div>
+                {% for field, values in h.changes.items %}<div class="small mt-1"><span class="text-muted">{{ field }}:</span> changed</div>{% endfor %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="small text-muted mb-0">No changes recorded.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
